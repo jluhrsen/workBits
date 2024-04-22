@@ -25,7 +25,7 @@ for job in "${cno_jobs[@]}"; do
     nurp_cno_jobs+=("$nurp_cno_job")
 done
 
-excluded_jobs=("install-analysis-all" "overall-analysis-all")
+excluded_jobs=("install-analysis-all" "overall-analysis-all" "e2e-metal-ipi-sdn-bm")
 missing_jobs=0
 for job in "${nurp_trt_jobs[@]}"; do
     if printf '%s\n' "${excluded_jobs[@]}" | grep -q -P "^${job}$"; then
