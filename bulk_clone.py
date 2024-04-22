@@ -1,13 +1,25 @@
+import argparse
 import requests
 import json
 
-print("set new sprint ID and comment out this exit. better yet, make sprint id a command line arg")
-exit(1)
+# new_sprint_id = '60065'
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('new_sprint_id', type=str, help='ID of the new sprint')
+args = parser.parse_args()
+new_sprint_id = args.new_sprint_id
 
-new_sprint_id = '60065'
+try:
+    with open('./jira_token', 'r') as file:
+        access_token = file.read().strip()
+except FileNotFoundError:
+    print(f"Error: The file ./jira_token was not found.")
+    exit(1)
+except Exception as e:
+    print(f"An error occurred: {e}")
+    exit(1)
+
 jira_url = 'https://issues.redhat.com'
 user = 'jluhrsen@redhat.com'
-access_token = 'redacted'
 api_url = f'{jira_url}/rest/api/2/search'
 jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 57544'
 headers = {
