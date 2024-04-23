@@ -13,16 +13,25 @@ mapfile -t trt_jobs < <(curl -s "https://raw.githubusercontent.com/openshift/rel
 
 nurp_trt_jobs=()
 for job in "${trt_jobs[@]}"; do
-    nurp_trt_job=$(echo "$job" | sed -n 's/.*4.16-\(.*\)/\1/p')
+    # e2e-aws-ovn-hypershift-conformance has a weird name and we need to hard code it to be right here
+    # so the final report is right
+    if [[ "$job" == "periodic-ci-openshift-hypershift-release-4.16-periodics-e2e-aws-ovn-conformance" ]]; then
+        nurp_trt_job="e2e-aws-ovn-hypershift-conformance"
+    else
+        nurp_trt_job=$(echo "$job" | sed -n 's/.*4.16-\(.*\)/\1/p')
+    fi
     nurp_trt_jobs+=("$nurp_trt_job")
 done
 
-mapfile -t cno_jobs < <(yq ".presubmits.\"openshift/${project_name}\"[].name" "${release_repo_path}/ci-operator/jobs/openshift/${project_name}/openshift-${project_name}-master-presubmits.yaml")
+mapfile -t project_jobs < <(yq ".presubmits.\"openshift/${project_name}\"[].name" "${release_repo_path}/ci-operator/jobs/openshift/${project_name}/openshift-${project_name}-master-presubmits.yaml")
 
-nurp_cno_jobs=()
-for job in "${cno_jobs[@]}"; do
-    nurp_cno_job=$(echo "$job" | sed -n 's/.*master-\(.*\)"$/\1/p')
-    nurp_cno_jobs+=("$nurp_cno_job")
+nurp_project_jobs=()
+for job in "${project_jobs[@]}"; do
+    nurp_project_job=$(echo "$job" | sed -n 's/.*master-\(.*\)"$/\1/p')
+    if [[ "$nurp_project_job" =~ "upgrade-from-stable" ]]; then
+        nurp_project_job=$(echo "$nurp_project_job" | sed "s/^${release_version}-//")
+    fi
+    nurp_project_jobs+=("$nurp_project_job")
 done
 
 excluded_jobs=("install-analysis-all" "overall-analysis-all" "e2e-metal-ipi-sdn-bm")
@@ -31,7 +40,7 @@ for job in "${nurp_trt_jobs[@]}"; do
     if printf '%s\n' "${excluded_jobs[@]}" | grep -q -P "^${job}$"; then
         continue
     fi
-    if [[ ! " ${nurp_cno_jobs[*]} " =~ " ${job} " ]]; then
+    if [[ ! " ${nurp_project_jobs[*]} " =~ " ${job} " ]]; then
         echo "Missing job: $job"
         ((missing_jobs++))
     fi
