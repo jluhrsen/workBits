@@ -2,7 +2,9 @@ import argparse
 import requests
 import json
 
-# new_sprint_id = '60065'
+# to find the new sprint ID, go to "Backlog" in jira and find the
+# upcoming sprint and click to show in navigator. the search field
+# will show the ID to use
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('new_sprint_id', type=str, help='ID of the new sprint')
 args = parser.parse_args()
