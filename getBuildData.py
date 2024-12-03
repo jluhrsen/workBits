@@ -4,8 +4,9 @@ import re
 import pandas as pd
 from datetime import datetime, timezone
 
+BRANCH = "master"
 BASE_URL = "https://prow.ci.openshift.org"
-JOB_HISTORY_URL = f"{BASE_URL}/job-history/gs/test-platform-results/pr-logs/directory/pull-ci-openshift-ovn-kubernetes-master-images"
+JOB_HISTORY_URL = f"{BASE_URL}/job-history/gs/test-platform-results/pr-logs/directory/pull-ci-openshift-ovn-kubernetes-{BRANCH}-images"
 CUTOFF_DATE = datetime(2024, 5, 1, tzinfo=timezone.utc)
 
 
@@ -88,7 +89,7 @@ def parse_build_data(builds):
         log_url = (
             f"https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs"
             f"/test-platform-results/pr-logs/pull/openshift_ovn-kubernetes/{pr_number}"
-            f"/pull-ci-openshift-ovn-kubernetes-master-images/{job_id}/build-log.txt"
+            f"/pull-ci-openshift-ovn-kubernetes-{BRANCH}-images/{job_id}/build-log.txt"
         )
 
         # Fetch build times from the log
