@@ -1,6 +1,6 @@
 import argparse
+import time
 import requests
-import json
 
 # to find the new sprint ID, go to "Backlog" in jira and find the
 # upcoming sprint and click to show in navigator. the search field
@@ -34,6 +34,7 @@ params = {
 }
 
 response = requests.get(f'{jira_url}/rest/api/2/myself', headers=headers)
+time.sleep(0.5)
 
 if response.status_code == 200:
     user_info = response.json()
@@ -62,6 +63,8 @@ def clone_and_assign_issue(issue_key, issue_summary):
         }
     }
     clone_response = requests.post(create_issue_url, headers=headers, json=issue_data)
+    time.sleep(0.5)
+
     if clone_response.status_code == 201:
         new_issue = clone_response.json()
         new_issue_key = new_issue['key']
@@ -71,6 +74,7 @@ def clone_and_assign_issue(issue_key, issue_summary):
             "issues": [new_issue_key]
         }
         sprint_response = requests.post(add_to_sprint_url, headers=headers, json=sprint_data)
+        time.sleep(0.5)
         if sprint_response.status_code == 204:
             print(f"Successfully cloned {issue_key} to {new_issue_key} and assigned to sprint {new_sprint_id}.")
         else:
@@ -80,6 +84,7 @@ def clone_and_assign_issue(issue_key, issue_summary):
 
 # Make the GET request to search for issues
 response = requests.get(api_url, headers=headers, params=params)
+time.sleep(0.5)
 
 # Check if the request was successful
 if response.status_code == 200:
