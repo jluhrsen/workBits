@@ -2,9 +2,8 @@ import argparse
 import time
 import requests
 
-# to find the new sprint ID, go to "Backlog" in jira and find the
-# upcoming sprint and click to show in navigator. the search field
-# will show the ID to use
+# to find the new sprint ID, run the find_new_sprint_id.py script in
+# this project
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('new_sprint_id', type=str, help='ID of the new sprint')
 args = parser.parse_args()
@@ -23,7 +22,7 @@ except Exception as e:
 jira_url = 'https://issues.redhat.com'
 user = 'jluhrsen@redhat.com'
 api_url = f'{jira_url}/rest/api/2/search'
-jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 57544'
+jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 69734'
 headers = {
     'Authorization': f'Bearer {access_token}',
     'Content-Type': 'application/json'
