@@ -22,7 +22,7 @@ except Exception as e:
 jira_url = 'https://issues.redhat.com'
 user = 'jluhrsen@redhat.com'
 api_url = f'{jira_url}/rest/api/2/search'
-jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 69734'
+jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 70895'
 headers = {
     'Authorization': f'Bearer {access_token}',
     'Content-Type': 'application/json'
@@ -45,7 +45,7 @@ def clone_and_assign_issue(issue_key, issue_summary):
     issue_data = {
         "fields": {
            "project": {
-               "key": "SDN"
+               "key": "CORENET"
            },
            "issuetype": {
                "name": "Story"

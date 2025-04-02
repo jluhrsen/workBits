@@ -18,7 +18,7 @@ except Exception as e:
     exit(1)
 
 JIRA_URL = 'https://issues.redhat.com'
-BOARD_ID = '5254'
+BOARD_ID = '19143'
 sprints_url = f'{JIRA_URL}/rest/agile/1.0/board/{BOARD_ID}/sprint'
 headers = {
     'Authorization': f'Bearer {access_token}',
