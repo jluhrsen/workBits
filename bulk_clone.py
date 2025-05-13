@@ -2,98 +2,88 @@ import argparse
 import time
 import requests
 
-# to find the new sprint ID, run the find_new_sprint_id.py script in
-# this project
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('new_sprint_id', type=str, help='ID of the new sprint')
+parser = argparse.ArgumentParser(description='Clone a Jira issue multiple times with sprint info.')
+parser.add_argument('sprint_id', type=str, help='ID of the target sprint')
 args = parser.parse_args()
-new_sprint_id = args.new_sprint_id
+sprint_id = args.sprint_id
 
 try:
     with open('./jira_token', 'r') as file:
         access_token = file.read().strip()
-except FileNotFoundError:
-    print(f"Error: The file ./jira_token was not found.")
-    exit(1)
 except Exception as e:
-    print(f"An error occurred: {e}")
+    print(f"Error reading token: {e}")
     exit(1)
 
 jira_url = 'https://issues.redhat.com'
-user = 'jluhrsen@redhat.com'
-api_url = f'{jira_url}/rest/api/2/search'
-jql_query = 'text ~ "check network related component readiness" AND assignee = jluhrsen and Sprint = 70895'
 headers = {
     'Authorization': f'Bearer {access_token}',
     'Content-Type': 'application/json'
 }
-params = {
-    'jql': jql_query,
-    'maxResults': 10  # Adjust as needed
-}
 
-response = requests.get(f'{jira_url}/rest/api/2/myself', headers=headers)
+# Get the sprint name
+sprint_info_url = f'{jira_url}/rest/agile/1.0/sprint/{sprint_id}'
+sprint_response = requests.get(sprint_info_url, headers=headers)
+if sprint_response.status_code != 200:
+    print(f"Failed to fetch sprint info. Response: {sprint_response.text}")
+    exit(1)
+
+sprint_name = sprint_response.json()['name']
+print(f"Target sprint: {sprint_name}")
 time.sleep(0.5)
 
-if response.status_code == 200:
-    user_info = response.json()
-    # print("Account ID:", user_info)
+# Get the source issue details
+source_issue_key = "CORENET-6030"
+issue_url = f'{jira_url}/rest/api/2/issue/{source_issue_key}'
+issue_response = requests.get(issue_url, headers=headers)
+if issue_response.status_code != 200:
+    print(f"Failed to fetch source issue. Response: {issue_response.text}")
+    exit(1)
 
+issue_data = issue_response.json()
+base_summary = issue_data['fields']['summary']
+description = issue_data['fields'].get('description', '')
+story_points = issue_data['fields'].get('customfield_12310243', 1)
 
-def clone_and_assign_issue(issue_key, issue_summary):
+time.sleep(0.5)
+
+# Define clones
+checklist = [
+    ("week1 check1", "jluhrsen"),
+    ("week1 check2", "anusaxen"),
+    ("week2 check1", "jluhrsen"),
+    ("week2 check2", "anusaxen"),
+    ("week3 check1", "jluhrsen"),
+    ("week3 check2", "anusaxen"),
+]
+
+# Create clones
+for check_label, assignee in checklist:
+    new_summary = base_summary.replace("[GENERIC_TO_BE_CLONED]", f"[{check_label} {sprint_name}]")
     create_issue_url = f'{jira_url}/rest/api/2/issue'
-    issue_data = {
+    new_issue_data = {
         "fields": {
-           "project": {
-               "key": "CORENET"
-           },
-           "issuetype": {
-               "name": "Story"
-           },
-           "summary": issue_summary,
-           "assignee": {
-               "name": "jluhrsen"
-           },
-           # story points
-           "customfield_12310243": 1,
-           "priority": {
-               "name": "Normal"
-           }
+            "project": {"key": "CORENET"},
+            "issuetype": {"name": "Story"},
+            "summary": new_summary,
+            "description": description,
+            "assignee": {"name": assignee},
+            "customfield_12310243": story_points,
+            "priority": {"name": "Normal"}
         }
     }
-    clone_response = requests.post(create_issue_url, headers=headers, json=issue_data)
+
+    create_response = requests.post(create_issue_url, headers=headers, json=new_issue_data)
     time.sleep(0.5)
 
-    if clone_response.status_code == 201:
-        new_issue = clone_response.json()
-        new_issue_key = new_issue['key']
-
-        add_to_sprint_url = f'{jira_url}/rest/agile/1.0/sprint/{new_sprint_id}/issue'
-        sprint_data = {
-            "issues": [new_issue_key]
-        }
-        sprint_response = requests.post(add_to_sprint_url, headers=headers, json=sprint_data)
+    if create_response.status_code == 201:
+        new_issue_key = create_response.json()['key']
+        sprint_add_url = f'{jira_url}/rest/agile/1.0/sprint/{sprint_id}/issue'
+        sprint_response = requests.post(sprint_add_url, headers=headers, json={"issues": [new_issue_key]})
         time.sleep(0.5)
+
         if sprint_response.status_code == 204:
-            print(f"Successfully cloned {issue_key} to {new_issue_key} and assigned to sprint {new_sprint_id}.")
+            print(f"Created {new_issue_key} assigned to {assignee}:\n  {new_summary}")
         else:
             print(f"Failed to add {new_issue_key} to sprint. Response: {sprint_response.text}")
     else:
-        print(f"Failed to clone {issue_key}. Response: {clone_response.text}")
-
-# Make the GET request to search for issues
-response = requests.get(api_url, headers=headers, params=params)
-time.sleep(0.5)
-
-# Check if the request was successful
-if response.status_code == 200:
-    # Parse the JSON response
-    issues = response.json()['issues']
-    # Loop through the issues and print details
-    for issue in issues:
-        print(f"Issue ID: {issue['id']}, Key: {issue['key']}, Summary: {issue['fields']['summary']}")
-        clone_and_assign_issue(issue['key'], issue['fields']['summary'])
-else:
-    # Print the error if the request failed
-    print(f"Failed to fetch issues, status code: {response.status_code}, response: {response.text}")
-
+        print(f"Failed to create issue. Response: {create_response.text}")
