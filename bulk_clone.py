@@ -67,7 +67,6 @@ for check_label, assignee in checklist:
             "summary": new_summary,
             "description": description,
             "assignee": {"name": assignee},
-            "customfield_12310243": story_points,
             "priority": {"name": "Normal"}
         }
     }
