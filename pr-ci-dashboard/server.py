@@ -3,6 +3,7 @@ import sys
 from flask import Flask, jsonify, request, render_template
 from utils.script_fetcher import fetch_scripts
 from utils.gh_auth import check_gh_auth
+from api.search import search_prs
 
 app = Flask(__name__)
 
@@ -30,6 +31,18 @@ def default_query():
     if CLI_ARGS:
         query += " " + " ".join(CLI_ARGS)
     return jsonify({"query": query})
+
+
+@app.route('/api/search', methods=['POST'])
+def api_search():
+    """Search for PRs."""
+    data = request.get_json()
+    query = data.get('query', '')
+    page = data.get('page', 1)
+    per_page = data.get('per_page', 10)
+
+    result = search_prs(query, page, per_page)
+    return jsonify(result)
 
 
 def parse_cli_args():
