@@ -4,9 +4,230 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PR CI Dashboard</title>
+    <style>
+        :root {
+            --primary: #ee0000;
+            --primary-dark: #c00000;
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #d4d4d4;
+            --border: #3d3d3d;
+            --success: #92cc6f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .banner {
+            background: #856404;
+            color: #fff3cd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .banner.hidden {
+            display: none;
+        }
+
+        .search-box {
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pr-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .pr-header {
+            margin-bottom: 1rem;
+        }
+
+        .pr-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pr-meta {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .job-section {
+            margin-top: 1rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .job-section-header {
+            cursor: pointer;
+            padding: 0.5rem 0;
+            user-select: none;
+        }
+
+        .job-section-header:hover {
+            color: var(--primary);
+        }
+
+        .job-list {
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .job-list.expanded {
+            display: block;
+        }
+
+        .job-item {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--bg-dark);
+            border-radius: 4px;
+        }
+
+        .job-name {
+            font-family: monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--primary); }
+
+        #load-more-btn {
+            width: 100%;
+            margin-top: 2rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>PR CI Dashboard</h1>
-    <p>Loading...</p>
+    <div class="navbar">
+        <h1>PR CI Dashboard</h1>
+        <button class="btn" id="refresh-btn">Refresh</button>
+    </div>
+
+    <div id="auth-banner" class="banner hidden"></div>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="search-input" class="search-input" placeholder="Loading default query...">
+            <button class="btn" id="search-btn">Search</button>
+        </div>
+
+        <div id="pr-cards-container"></div>
+
+        <button class="btn btn-secondary hidden" id="load-more-btn">
+            Load More (<span id="current-count">0</span> of <span id="total-count">0</span>)
+        </button>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/app.js"></script>
 </body>
 </html>
