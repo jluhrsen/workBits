@@ -92,5 +92,5 @@ ENV SHELL=/usr/bin/zsh
 SHELL ["/usr/bin/zsh", "-c"]
 
 # Set entrypoint
-ENTRYPOINT ["/home/claude/session_manager.py"]
+ENTRYPOINT ["python3", "/home/claude/session_manager.py"]
 CMD ["--dangerously-skip-permissions"]

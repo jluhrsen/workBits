@@ -66,7 +66,12 @@ class SessionManager:
 
         # For now, just launch Claude directly
         # TODO: Add session picker, sync, restore logic
-        os.execvp('claude', ['claude'] + sys.argv[1:])
+        try:
+            os.execvp('claude', ['claude'] + sys.argv[1:])
+        except OSError as e:
+            print(f"\n❌ Error launching Claude: {e}", file=sys.stderr)
+            print("Make sure Claude Code CLI is installed: npm install -g @anthropic-ai/claude-code", file=sys.stderr)
+            sys.exit(1)
 
 def main():
     manager = SessionManager()
