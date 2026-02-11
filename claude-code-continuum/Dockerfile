@@ -83,8 +83,14 @@ RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_l
     rm gh.rpm && \
     sudo dnf clean all
 
+# Copy session manager
+COPY --chown=$USER_NAME:$USER_NAME container-files/session_manager.py /home/$USER_NAME/session_manager.py
+RUN chmod +x /home/$USER_NAME/session_manager.py
+
 # Set up basic shell
 ENV SHELL=/usr/bin/zsh
 SHELL ["/usr/bin/zsh", "-c"]
 
-CMD ["/usr/bin/zsh"]
+# Set entrypoint
+ENTRYPOINT ["/home/claude/session_manager.py"]
+CMD ["--dangerously-skip-permissions"]
