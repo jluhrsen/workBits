@@ -14,7 +14,7 @@ ARG USER_GID=1000
 
 RUN groupadd --gid $USER_GID $USER_NAME && \
     useradd --uid $USER_UID --gid $USER_GID -m $USER_NAME && \
-    echo "$USER_NAME ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+    echo "$USER_NAME ALL=(ALL) NOPASSWD: /usr/bin/dnf, /usr/bin/mv, /usr/bin/tee" >> /etc/sudoers
 
 # Install system packages
 RUN dnf install -y --allowerasing \
@@ -55,18 +55,19 @@ USER $USER_NAME
 WORKDIR /home/$USER_NAME
 
 # Install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2
 
 # Install oc (OpenShift CLI)
-RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz" -o oc.tar.gz && \
+RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.15.2/openshift-client-linux.tar.gz" -o oc.tar.gz && \
     tar -xzf oc.tar.gz -C /tmp && \
     sudo mv /tmp/oc /usr/local/bin/ && \
     sudo mv /tmp/kubectl /usr/local/bin/ && \
     rm oc.tar.gz
 
 # Install gh CLI
-RUN curl -fsSL "https://cli.github.com/packages/rpm/gh-cli.repo" | sudo tee /etc/yum.repos.d/gh-cli.repo && \
-    sudo dnf install -y gh && \
+RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_linux_amd64.rpm" -o gh.rpm && \
+    sudo dnf install -y ./gh.rpm && \
+    rm gh.rpm && \
     sudo dnf clean all
 
 # Set up basic shell
