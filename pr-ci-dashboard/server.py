@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request, render_template
 from utils.script_fetcher import fetch_scripts
 from utils.gh_auth import check_gh_auth
 from api.search import search_prs
+from api.jobs import get_pr_jobs
 
 app = Flask(__name__)
 
@@ -42,6 +43,13 @@ def api_search():
     per_page = data.get('per_page', 10)
 
     result = search_prs(query, page, per_page)
+    return jsonify(result)
+
+
+@app.route('/api/pr/<owner>/<repo>/<int:pr_number>')
+def api_pr_jobs(owner, repo, pr_number):
+    """Get job status for a PR."""
+    result = get_pr_jobs(owner, repo, pr_number)
     return jsonify(result)
 
 

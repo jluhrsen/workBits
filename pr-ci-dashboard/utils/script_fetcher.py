@@ -3,13 +3,11 @@ import os
 import shutil
 import requests
 
-E2E_SCRIPT_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/main/plugins/ci/skills/e2e-retest/e2e-retest.sh"
-PAYLOAD_SCRIPT_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/main/plugins/ci/skills/payload-retest/payload-retest.sh"
+BASE_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/main/plugins/ci/skills"
 
 # Local paths for development (fallback if GitHub fetch fails)
 AI_HELPERS_PATH = os.path.expanduser("~/repos/RedHat/openshift/ai-helpers")
-E2E_LOCAL = f"{AI_HELPERS_PATH}/plugins/ci/skills/e2e-retest/e2e-retest.sh"
-PAYLOAD_LOCAL = f"{AI_HELPERS_PATH}/plugins/ci/skills/payload-retest/payload-retest.sh"
+AI_HELPERS_SKILLS = f"{AI_HELPERS_PATH}/plugins/ci/skills"
 
 SCRIPT_DIR = "/tmp/pr-ci-dashboard"
 
@@ -17,9 +15,13 @@ def fetch_scripts():
     """Download scripts from GitHub to local temp directory, or copy from local repo."""
     os.makedirs(SCRIPT_DIR, exist_ok=True)
 
+    # Scripts with their GitHub path and local path
     scripts = {
-        'e2e-retest.sh': (E2E_SCRIPT_URL, E2E_LOCAL),
-        'payload-retest.sh': (PAYLOAD_SCRIPT_URL, PAYLOAD_LOCAL)
+        'e2e-retest.sh': (f"{BASE_URL}/e2e-retest/e2e-retest.sh", f"{AI_HELPERS_SKILLS}/e2e-retest/e2e-retest.sh"),
+        'common.sh': (f"{BASE_URL}/e2e-retest/common.sh", f"{AI_HELPERS_SKILLS}/e2e-retest/common.sh"),
+        'fetch-e2e-data.sh': (f"{BASE_URL}/e2e-retest/fetch-e2e-data.sh", f"{AI_HELPERS_SKILLS}/e2e-retest/fetch-e2e-data.sh"),
+        'payload-retest.sh': (f"{BASE_URL}/payload-retest/payload-retest.sh", f"{AI_HELPERS_SKILLS}/payload-retest/payload-retest.sh"),
+        'fetch-payload-data.sh': (f"{BASE_URL}/payload-retest/fetch-payload-data.sh", f"{AI_HELPERS_SKILLS}/payload-retest/fetch-payload-data.sh"),
     }
 
     for filename, (url, local_fallback) in scripts.items():
