@@ -2,9 +2,9 @@
 import os
 import requests
 
-BASE_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/main/plugins/ci/skills"
+BASE_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/refs/pull/177/head/plugins/ci/skills"
 
-SCRIPT_DIR = "/tmp/pr-ci-dashboard"
+SCRIPT_DIR = "/tmp/pr-ci-dashboard-scripts"
 
 def fetch_scripts():
     """Download scripts from GitHub to local temp directory."""
