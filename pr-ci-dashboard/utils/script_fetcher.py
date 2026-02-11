@@ -2,7 +2,12 @@
 import os
 import requests
 
-BASE_URL = "https://raw.githubusercontent.com/openshift-eng/ai-helpers/refs/pull/177/head/plugins/ci/skills"
+# Script source can be configured via environment variable
+# Default: PR #177 branch (development - scripts not yet merged to main)
+# Production: Set AI_HELPERS_BRANCH=main after PR #177 merges
+# TODO: Change default to 'main' after PR #177 merges to ai-helpers repository
+AI_HELPERS_BRANCH = os.environ.get('AI_HELPERS_BRANCH', 'refs/pull/177/head')
+BASE_URL = f"https://raw.githubusercontent.com/openshift-eng/ai-helpers/{AI_HELPERS_BRANCH}/plugins/ci/skills"
 
 SCRIPT_DIR = "/tmp/pr-ci-dashboard-scripts"
 
