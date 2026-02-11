@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# CCC - Claude Code Continuum Wrapper
+# Manages Docker setup, credential mounting, and validation
+
+VERSION="0.1.0"
+CONTAINER_IMAGE="${CCC_IMAGE:-quay.io/jluhrsen/claude-code-continuum:latest}"
+CONTAINER_USER="claude"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+error() {
+    echo -e "${RED}❌ $1${NC}" >&2
+}
+
+info() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+# Validate setup before running
+validate_setup() {
+    # Check if continuum repo is configured
+    if [[ -n "${CONTINUUM_REPO_URL:-}" ]]; then
+        # User wants cloud sync, check for deploy key
+        KEY_FILE="${CONTINUUM_KEY_PATH:-$HOME/.ssh/continuum_deploy_key}"
+
+        if [[ ! -f "$KEY_FILE" ]]; then
+            error "CONTINUUM_REPO_URL is set but deploy key not found!"
+            echo ""
+            echo "Setup instructions:"
+            echo "  1. Create deploy key: ssh-keygen -t ed25519 -f ~/.ssh/continuum_deploy_key"
+            echo "  2. Add public key (~/.ssh/continuum_deploy_key.pub) to GitHub repo settings"
+            echo "  3. Run ccc again"
+            echo ""
+            echo "Alternatively, unset CONTINUUM_REPO_URL to use local-only mode."
+            return 1
+        fi
+
+        info "Deploy key found: $KEY_FILE"
+    else
+        warn "CONTINUUM_REPO_URL not set - running in local-only mode"
+        warn "Sessions will not sync across machines"
+    fi
+
+    return 0
+}
+
+# Build Docker run command with appropriate mounts
+build_docker_cmd() {
+    local docker_args=()
+
+    # Basic container setup
+    docker_args+=(--rm -it)
+    docker_args+=(--name "ccc-$$")
+
+    # Mount current directory as /workspace (read-write)
+    docker_args+=(-v "$(pwd):/workspace")
+    docker_args+=(-w /workspace)
+
+    # Whitelist /tmp
+    docker_args+=(-v /tmp:/tmp)
+
+    # Mount Claude authentication (read-only)
+    if [[ -d "$HOME/.claude" ]]; then
+        docker_args+=(-v "$HOME/.claude:/home/$CONTAINER_USER/.claude:ro")
+    fi
+
+    # Mount GCP credentials for Vertex AI (read-only)
+    if [[ -d "$HOME/.config/gcloud" ]]; then
+        docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
+    fi
+
+    # Mount continuum deploy key if configured (read-only)
+    if [[ -n "${CONTINUUM_REPO_URL:-}" ]]; then
+        KEY_FILE="${CONTINUUM_KEY_PATH:-$HOME/.ssh/continuum_deploy_key}"
+        docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
+    fi
+
+    # Pass through Claude-related env vars
+    [[ -n "${CLAUDE_CODE_USE_VERTEX:-}" ]] && docker_args+=(-e CLAUDE_CODE_USE_VERTEX)
+    [[ -n "${GCP_ID:-}" ]] && docker_args+=(-e GCP_ID)
+    [[ -n "${CLOUD_ML_REGION:-}" ]] && docker_args+=(-e CLOUD_ML_REGION)
+    [[ -n "${ANTHROPIC_API_KEY:-}" ]] && docker_args+=(-e ANTHROPIC_API_KEY)
+    [[ -n "${ANTHROPIC_VERTEX_PROJECT_ID:-}" ]] && docker_args+=(-e ANTHROPIC_VERTEX_PROJECT_ID)
+
+    # Pass through continuum repo URL
+    [[ -n "${CONTINUUM_REPO_URL:-}" ]] && docker_args+=(-e CONTINUUM_REPO_URL)
+
+    echo "${docker_args[@]}"
+}
+
+# Main execution
+main() {
+    # Validate setup first
+    if ! validate_setup; then
+        exit 1
+    fi
+
+    # Handle --version flag
+    if [[ "${1:-}" == "--version" ]]; then
+        echo "ccc version $VERSION"
+        exit 0
+    fi
+
+    # Handle --help flag
+    if [[ "${1:-}" == "--help" ]]; then
+        cat <<EOF
+ccc - Claude Code Continuum
+
+Usage: ccc [claude-options]
+
+Environment Variables:
+  CONTINUUM_REPO_URL        Git URL for session storage (optional)
+  CONTINUUM_KEY_PATH        Path to deploy key (default: ~/.ssh/continuum_deploy_key)
+  CCC_IMAGE                 Container image (default: quay.io/jluhrsen/claude-code-continuum:latest)
+  CLAUDE_CODE_USE_VERTEX    Use Vertex AI (optional)
+  GCP_ID                    GCP project ID (optional)
+  CLOUD_ML_REGION           GCP region (optional)
+
+Examples:
+  ccc                                          # Start interactive session picker
+  ccc --dangerously-skip-permissions -r        # Resume last session with auto-approve
+
+For more info: https://github.com/jluhrsen/workBits/tree/main/claude-code-continuum
+EOF
+        exit 0
+    fi
+
+    # Build docker command
+    local docker_args
+    read -ra docker_args <<< "$(build_docker_cmd)"
+
+    # Run container
+    exec docker run "${docker_args[@]}" "$CONTAINER_IMAGE" "$@"
+}
+
+main "$@"
