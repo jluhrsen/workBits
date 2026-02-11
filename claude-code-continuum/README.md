@@ -31,4 +31,4 @@ See [Design Document](docs/plans/2026-02-10-claude-code-continuum-design.md) for
 
 ## License
 
-MIT License - see LICENSE file.
+Apache 2.0 License - see LICENSE file.
