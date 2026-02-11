@@ -5,6 +5,7 @@ from utils.script_fetcher import fetch_scripts
 from utils.gh_auth import check_gh_auth
 from api.search import search_prs
 from api.jobs import get_pr_jobs
+from api.retest import retest_jobs
 
 app = Flask(__name__)
 
@@ -50,6 +51,24 @@ def api_search():
 def api_pr_jobs(owner, repo, pr_number):
     """Get job status for a PR."""
     result = get_pr_jobs(owner, repo, pr_number)
+    return jsonify(result)
+
+
+@app.route('/api/retest', methods=['POST'])
+def api_retest():
+    """Post retest comment to PR."""
+    data = request.get_json()
+
+    owner = data.get('owner')
+    repo = data.get('repo')
+    pr = data.get('pr')
+    jobs = data.get('jobs', [])
+    job_type = data.get('type', 'e2e')
+
+    if not all([owner, repo, pr, jobs]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    result = retest_jobs(owner, repo, pr, jobs, job_type)
     return jsonify(result)
 
 
