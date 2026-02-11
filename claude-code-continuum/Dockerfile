@@ -54,6 +54,19 @@ ENV PATH="${GOPATH}/bin:${PATH}"
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 
+# Install oh-my-zsh
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Install Powerlevel10k theme
+RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+
+# Install zsh plugins
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# Copy sanitized .zshrc
+COPY --chown=$USER_NAME:$USER_NAME container-files/.zshrc /home/$USER_NAME/.zshrc
+
 # Install golangci-lint
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2
 
