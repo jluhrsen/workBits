@@ -19,33 +19,11 @@ source $ZSH/oh-my-zsh.sh
 # Editor
 export EDITOR='vim'
 
-# Useful aliases
-alias du='dust'
-alias find='fd'
-alias h='history 1'
-alias rgh='history 1 | rg'
-
 # Git aliases
 alias grr='git review --reviewers'
 alias grm='git rebase master'
 alias grum='git rebase upstream/master'
 alias gfum='git fetch upstream && git merge upstream/master'
-
-# Git functions
-unalias gfa 2>/dev/null || true
-gfa() {
-  git fetch --all --prune
-  for b in master release-4.21 release-4.20 release-4.19 release-4.18 release-4.17 release-4.16; do
-    git checkout "$b" &&
-    git reset --hard "upstream/$b" &&
-    git push origin "$b"
-  done
-}
-
-# Go environment
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin
-export PATH=$PATH:/usr/local/go/bin
 
 # Tab completion
 autoload -Uz compinit && compinit
