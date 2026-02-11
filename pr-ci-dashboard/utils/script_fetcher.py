@@ -19,15 +19,21 @@ def fetch_scripts():
     for filename, url in scripts.items():
         local_path = os.path.join(SCRIPT_DIR, filename)
 
-        print(f"Fetching {filename} from GitHub...")
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        try:
+            print(f"Fetching {filename} from GitHub...")
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
 
-        with open(local_path, 'w') as f:
-            f.write(response.text)
+            with open(local_path, 'w') as f:
+                f.write(response.text)
 
-        os.chmod(local_path, 0o755)
-        print(f"✅ {filename} ready at {local_path}")
+            os.chmod(local_path, 0o755)
+            print(f"✅ {filename} ready at {local_path}")
+
+        except requests.RequestException as e:
+            raise Exception(f"Failed to fetch {filename} from GitHub: {e}")
+        except (IOError, OSError) as e:
+            raise Exception(f"Failed to write {filename} to disk: {e}")
 
     return SCRIPT_DIR
 
