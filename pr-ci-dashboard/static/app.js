@@ -44,8 +44,13 @@ async function init() {
 }
 
 async function checkAuth() {
-    const response = await fetch('/api/auth/status');
-    return await response.json();
+    try {
+        const response = await fetch('/api/auth/status');
+        return await response.json();
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        return { authenticated: false, error: 'Failed to check authentication status' };
+    }
 }
 
 function showAuthBanner(message) {
@@ -57,25 +62,31 @@ function showAuthBanner(message) {
 async function executeSearch(query) {
     showLoading('Searching PRs...');
 
-    const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, page: currentPage, per_page: 10 })
-    });
+    try {
+        const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, page: currentPage, per_page: 10 })
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (data.error) {
-        showToast(data.error, 'error');
+        if (data.error) {
+            showToast(data.error, 'error');
+            hideLoading();
+            return;
+        }
+
+        currentPRs = data.prs;
+        totalResults = data.total;
+
         hideLoading();
-        return;
+        renderPRCards(data.prs);
+    } catch (error) {
+        console.error('Search failed:', error);
+        showToast('Search failed: ' + error.message, 'error');
+        hideLoading();
     }
-
-    currentPRs = data.prs;
-    totalResults = data.total;
-
-    hideLoading();
-    renderPRCards(data.prs);
 }
 
 function renderPRCards(prs) {
@@ -102,24 +113,55 @@ function createPRCard(pr) {
 
     const age = getAge(pr.created_at);
 
-    card.innerHTML = `
-        <div class="pr-header">
-            <div class="pr-title">
-                PR #${pr.number} - ${pr.title}
-            </div>
-            <div class="pr-meta">
-                ${pr.owner}/${pr.repo} • ${pr.author} • ${age}
-            </div>
-        </div>
-        <div class="job-section" id="e2e-${pr.owner}-${pr.repo}-${pr.number}">
-            <div class="job-section-header">▶ E2E Jobs (loading...)</div>
-            <div class="job-list"></div>
-        </div>
-        <div class="job-section" id="payload-${pr.owner}-${pr.repo}-${pr.number}">
-            <div class="job-section-header">▶ Payload Jobs (loading...)</div>
-            <div class="job-list"></div>
-        </div>
-    `;
+    // Create PR header with safe text content
+    const prHeader = document.createElement('div');
+    prHeader.className = 'pr-header';
+
+    const prTitle = document.createElement('div');
+    prTitle.className = 'pr-title';
+    prTitle.textContent = `PR #${pr.number} - ${pr.title}`;
+
+    const prMeta = document.createElement('div');
+    prMeta.className = 'pr-meta';
+    prMeta.textContent = `${pr.owner}/${pr.repo} • ${pr.author} • ${age}`;
+
+    prHeader.appendChild(prTitle);
+    prHeader.appendChild(prMeta);
+
+    // Create E2E section
+    const e2eSection = document.createElement('div');
+    e2eSection.className = 'job-section';
+    e2eSection.id = `e2e-${pr.owner}-${pr.repo}-${pr.number}`;
+
+    const e2eHeader = document.createElement('div');
+    e2eHeader.className = 'job-section-header';
+    e2eHeader.textContent = '▶ E2E Jobs (loading...)';
+
+    const e2eList = document.createElement('div');
+    e2eList.className = 'job-list';
+
+    e2eSection.appendChild(e2eHeader);
+    e2eSection.appendChild(e2eList);
+
+    // Create Payload section
+    const payloadSection = document.createElement('div');
+    payloadSection.className = 'job-section';
+    payloadSection.id = `payload-${pr.owner}-${pr.repo}-${pr.number}`;
+
+    const payloadHeader = document.createElement('div');
+    payloadHeader.className = 'job-section-header';
+    payloadHeader.textContent = '▶ Payload Jobs (loading...)';
+
+    const payloadList = document.createElement('div');
+    payloadList.className = 'job-list';
+
+    payloadSection.appendChild(payloadHeader);
+    payloadSection.appendChild(payloadList);
+
+    // Assemble card
+    card.appendChild(prHeader);
+    card.appendChild(e2eSection);
+    card.appendChild(payloadSection);
 
     return card;
 }
@@ -145,22 +187,61 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     const e2eRunning = data.e2e.running || [];
 
     e2eHeader.textContent = `▶ E2E Jobs (${e2eFailed.length} failed | ${e2eRunning.length} running)`;
-    e2eHeader.onclick = () => e2eList.classList.toggle('expanded');
+
+    // Remove old listener and add new one
+    const newE2eHeader = e2eHeader.cloneNode(true);
+    e2eHeader.parentNode.replaceChild(newE2eHeader, e2eHeader);
+    newE2eHeader.addEventListener('click', () => e2eList.classList.toggle('expanded'));
+
+    // Clear existing content
+    e2eList.innerHTML = '';
 
     if (e2eFailed.length > 0) {
-        e2eList.innerHTML = e2eFailed.map(job => `
-            <div class="job-item">
-                <div class="job-name">❌ ${job.name} (${job.consecutive} consecutive)</div>
-                <div class="job-actions">
-                    <button class="btn" onclick="retestJob('${owner}', '${repo}', ${number}, ['${job.name}'], 'e2e')">Retest</button>
-                    <button class="btn btn-secondary" disabled>Analyze</button>
-                </div>
-            </div>
-        `).join('');
+        e2eFailed.forEach(job => {
+            const jobItem = document.createElement('div');
+            jobItem.className = 'job-item';
 
-        e2eList.innerHTML += `<button class="btn" onclick="retestAllE2E('${owner}', '${repo}', ${number})">Retest All E2E</button>`;
+            const jobName = document.createElement('div');
+            jobName.className = 'job-name';
+            jobName.textContent = `❌ ${job.name} (${job.consecutive} consecutive)`;
+
+            const jobActions = document.createElement('div');
+            jobActions.className = 'job-actions';
+
+            const retestBtn = document.createElement('button');
+            retestBtn.className = 'btn';
+            retestBtn.textContent = 'Retest';
+            retestBtn.dataset.owner = owner;
+            retestBtn.dataset.repo = repo;
+            retestBtn.dataset.number = number;
+            retestBtn.dataset.jobName = job.name;
+            retestBtn.dataset.jobType = 'e2e';
+            retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'e2e'));
+
+            const analyzeBtn = document.createElement('button');
+            analyzeBtn.className = 'btn btn-secondary';
+            analyzeBtn.textContent = 'Analyze';
+            analyzeBtn.disabled = true;
+
+            jobActions.appendChild(retestBtn);
+            jobActions.appendChild(analyzeBtn);
+
+            jobItem.appendChild(jobName);
+            jobItem.appendChild(jobActions);
+
+            e2eList.appendChild(jobItem);
+        });
+
+        const retestAllBtn = document.createElement('button');
+        retestAllBtn.className = 'btn';
+        retestAllBtn.textContent = 'Retest All E2E';
+        retestAllBtn.addEventListener('click', () => retestAllE2E(owner, repo, number));
+        e2eList.appendChild(retestAllBtn);
     } else {
-        e2eList.innerHTML = '<div style="padding: 0.5rem;">✅ No failed jobs</div>';
+        const noFailures = document.createElement('div');
+        noFailures.style.padding = '0.5rem';
+        noFailures.textContent = '✅ No failed jobs';
+        e2eList.appendChild(noFailures);
     }
 
     // Update Payload section
@@ -172,41 +253,85 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     const payloadRunning = data.payload.running || [];
 
     payloadHeader.textContent = `▶ Payload Jobs (${payloadFailed.length} failed | ${payloadRunning.length} running)`;
-    payloadHeader.onclick = () => payloadList.classList.toggle('expanded');
+
+    // Remove old listener and add new one
+    const newPayloadHeader = payloadHeader.cloneNode(true);
+    payloadHeader.parentNode.replaceChild(newPayloadHeader, payloadHeader);
+    newPayloadHeader.addEventListener('click', () => payloadList.classList.toggle('expanded'));
+
+    // Clear existing content
+    payloadList.innerHTML = '';
 
     if (payloadFailed.length > 0) {
-        payloadList.innerHTML = payloadFailed.map(job => `
-            <div class="job-item">
-                <div class="job-name">❌ ${job.name} (${job.consecutive} consecutive)</div>
-                <div class="job-actions">
-                    <button class="btn" onclick="retestJob('${owner}', '${repo}', ${number}, ['${job.name}'], 'payload')">Retest</button>
-                    <button class="btn btn-secondary" disabled>Analyze</button>
-                </div>
-            </div>
-        `).join('');
+        payloadFailed.forEach(job => {
+            const jobItem = document.createElement('div');
+            jobItem.className = 'job-item';
 
-        payloadList.innerHTML += `<button class="btn" onclick="retestAllPayload('${owner}', '${repo}', ${number})">Retest All Payload</button>`;
+            const jobName = document.createElement('div');
+            jobName.className = 'job-name';
+            jobName.textContent = `❌ ${job.name} (${job.consecutive} consecutive)`;
+
+            const jobActions = document.createElement('div');
+            jobActions.className = 'job-actions';
+
+            const retestBtn = document.createElement('button');
+            retestBtn.className = 'btn';
+            retestBtn.textContent = 'Retest';
+            retestBtn.dataset.owner = owner;
+            retestBtn.dataset.repo = repo;
+            retestBtn.dataset.number = number;
+            retestBtn.dataset.jobName = job.name;
+            retestBtn.dataset.jobType = 'payload';
+            retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'payload'));
+
+            const analyzeBtn = document.createElement('button');
+            analyzeBtn.className = 'btn btn-secondary';
+            analyzeBtn.textContent = 'Analyze';
+            analyzeBtn.disabled = true;
+
+            jobActions.appendChild(retestBtn);
+            jobActions.appendChild(analyzeBtn);
+
+            jobItem.appendChild(jobName);
+            jobItem.appendChild(jobActions);
+
+            payloadList.appendChild(jobItem);
+        });
+
+        const retestAllBtn = document.createElement('button');
+        retestAllBtn.className = 'btn';
+        retestAllBtn.textContent = 'Retest All Payload';
+        retestAllBtn.addEventListener('click', () => retestAllPayload(owner, repo, number));
+        payloadList.appendChild(retestAllBtn);
     } else {
-        payloadList.innerHTML = '<div style="padding: 0.5rem;">✅ No failed jobs</div>';
+        const noFailures = document.createElement('div');
+        noFailures.style.padding = '0.5rem';
+        noFailures.textContent = '✅ No failed jobs';
+        payloadList.appendChild(noFailures);
     }
 }
 
 async function retestJob(owner, repo, pr, jobs, type) {
-    const response = await fetch('/api/retest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ owner, repo, pr, jobs, type })
-    });
+    try {
+        const response = await fetch('/api/retest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ owner, repo, pr, jobs, type })
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (result.error === 'auth_failed') {
-        showAuthBanner('GitHub CLI not authenticated. Run: gh auth login');
-        disableAllRetestButtons();
-    } else if (result.success) {
-        showToast(`✅ Retest triggered for ${jobs.length} job(s)`, 'success');
-    } else {
-        showToast(`❌ Error: ${result.error}`, 'error');
+        if (result.error === 'auth_failed') {
+            showAuthBanner('GitHub CLI not authenticated. Run: gh auth login');
+            disableAllRetestButtons();
+        } else if (result.success) {
+            showToast(`✅ Retest triggered for ${jobs.length} job(s)`, 'success');
+        } else {
+            showToast(`❌ Error: ${result.error}`, 'error');
+        }
+    } catch (error) {
+        console.error('Retest failed:', error);
+        showToast('Retest failed: ' + error.message, 'error');
     }
 }
 
