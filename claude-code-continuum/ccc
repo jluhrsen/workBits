@@ -137,7 +137,7 @@ EOF
 
     # Build docker command
     local docker_args
-    read -ra docker_args <<< "$(build_docker_cmd)"
+    docker_args=($(build_docker_cmd))
 
     # Run container
     exec docker run "${docker_args[@]}" "$CONTAINER_IMAGE" "$@"
