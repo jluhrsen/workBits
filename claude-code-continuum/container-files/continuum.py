@@ -6,6 +6,7 @@ Handles initialization, syncing, and management of the continuum git repository.
 """
 
 import os
+import json
 import yaml
 from pathlib import Path
 from typing import List, Dict, Any
@@ -88,7 +89,6 @@ class ContinuumRepo:
             if session_dir.is_dir():
                 metadata_file = session_dir / 'metadata.json'
                 if metadata_file.exists():
-                    import json
                     with open(metadata_file) as f:
                         metadata = json.load(f)
                     sessions.append(metadata)
@@ -97,13 +97,21 @@ class ContinuumRepo:
 
     def clone_or_pull(self, repo_url: str) -> bool:
         """Clone continuum repo if not exists, otherwise pull latest"""
+        # Construct SSH key path properly (will expand ~ to home directory)
+        ssh_key_path = Path.home() / '.ssh' / 'continuum_key'
+        git_env = {
+            **os.environ,
+            'GIT_SSH_COMMAND': f'ssh -i {ssh_key_path} -o StrictHostKeyChecking=no'
+        }
+
         try:
             if (self.path / '.git').exists():
                 # Already cloned, pull latest
                 subprocess.run(
                     ['git', '-C', str(self.path), 'pull'],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
+                    env=git_env
                 )
             else:
                 # Clone repo
@@ -112,12 +120,23 @@ class ContinuumRepo:
                     ['git', 'clone', repo_url, str(self.path)],
                     check=True,
                     capture_output=True,
-                    env={**os.environ, 'GIT_SSH_COMMAND': 'ssh -i ~/.ssh/continuum_key -o StrictHostKeyChecking=no'}
+                    env=git_env
                 )
 
                 # If freshly cloned and empty, initialize structure
                 if not self.sessions_dir.exists():
                     self.init()
+
+                    # Configure git user for commits
+                    subprocess.run(
+                        ['git', '-C', str(self.path), 'config', 'user.name', 'CCC Bot'],
+                        check=True
+                    )
+                    subprocess.run(
+                        ['git', '-C', str(self.path), 'config', 'user.email', 'ccc@local'],
+                        check=True
+                    )
+
                     subprocess.run(
                         ['git', '-C', str(self.path), 'add', '.'],
                         check=True
@@ -129,10 +148,12 @@ class ContinuumRepo:
                     subprocess.run(
                         ['git', '-C', str(self.path), 'push'],
                         check=True,
-                        env={**os.environ, 'GIT_SSH_COMMAND': 'ssh -i ~/.ssh/continuum_key -o StrictHostKeyChecking=no'}
+                        env=git_env
                     )
 
             return True
         except subprocess.CalledProcessError as e:
             print(f"Error syncing continuum repo: {e}")
+            if e.stderr:
+                print(f"Git error output: {e.stderr.decode()}")
             return False
