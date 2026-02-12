@@ -3,6 +3,11 @@ let currentPRs = [];
 let currentPage = 1;
 let totalResults = 0;
 
+// Track retested jobs: Map<"owner/repo/pr/jobName", {timestamp, pollInterval}>
+const retestedJobs = new Map();
+const POLL_INTERVAL = 5000; // 5 seconds
+const MAX_POLL_TIME = 5 * 60 * 1000; // 5 minutes
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await init();
@@ -183,8 +188,25 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     const e2eHeader = e2eSection.querySelector('.job-section-header');
     const e2eList = e2eSection.querySelector('.job-list');
 
-    const e2eFailed = data.e2e.failed || [];
+    let e2eFailed = data.e2e.failed || [];
     const e2eRunning = data.e2e.running || [];
+
+    // Filter out retested jobs that are now running
+    e2eFailed = e2eFailed.filter(job => {
+        const jobKey = `${owner}/${repo}/${number}/${job.name}`;
+        const retestInfo = retestedJobs.get(jobKey);
+        if (retestInfo) {
+            // Check if job is now running
+            const isRunning = e2eRunning.some(r => r.name === job.name);
+            if (isRunning) {
+                // Job started running, stop polling for this job
+                clearInterval(retestInfo.pollInterval);
+                retestedJobs.delete(jobKey);
+                return false; // Remove from failed list
+            }
+        }
+        return true; // Keep in failed list
+    });
 
     e2eHeader.textContent = `▶ E2E Jobs (${e2eFailed.length} failed | ${e2eRunning.length} running)`;
 
@@ -210,13 +232,21 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
 
             const retestBtn = document.createElement('button');
             retestBtn.className = 'btn';
-            retestBtn.textContent = 'Retest';
             retestBtn.dataset.owner = owner;
             retestBtn.dataset.repo = repo;
             retestBtn.dataset.number = number;
             retestBtn.dataset.jobName = job.name;
             retestBtn.dataset.jobType = 'e2e';
-            retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'e2e'));
+
+            // Check if job is being polled
+            const jobKey = `${owner}/${repo}/${number}/${job.name}`;
+            if (retestedJobs.has(jobKey)) {
+                retestBtn.textContent = '⏳ Retesting...';
+                retestBtn.disabled = true;
+            } else {
+                retestBtn.textContent = 'Retest';
+                retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'e2e'));
+            }
 
             const analyzeBtn = document.createElement('button');
             analyzeBtn.className = 'btn btn-secondary';
@@ -249,8 +279,25 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     const payloadHeader = payloadSection.querySelector('.job-section-header');
     const payloadList = payloadSection.querySelector('.job-list');
 
-    const payloadFailed = data.payload.failed || [];
+    let payloadFailed = data.payload.failed || [];
     const payloadRunning = data.payload.running || [];
+
+    // Filter out retested jobs that are now running
+    payloadFailed = payloadFailed.filter(job => {
+        const jobKey = `${owner}/${repo}/${number}/${job.name}`;
+        const retestInfo = retestedJobs.get(jobKey);
+        if (retestInfo) {
+            // Check if job is now running
+            const isRunning = payloadRunning.some(r => r.name === job.name);
+            if (isRunning) {
+                // Job started running, stop polling for this job
+                clearInterval(retestInfo.pollInterval);
+                retestedJobs.delete(jobKey);
+                return false; // Remove from failed list
+            }
+        }
+        return true; // Keep in failed list
+    });
 
     payloadHeader.textContent = `▶ Payload Jobs (${payloadFailed.length} failed | ${payloadRunning.length} running)`;
 
@@ -276,13 +323,21 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
 
             const retestBtn = document.createElement('button');
             retestBtn.className = 'btn';
-            retestBtn.textContent = 'Retest';
             retestBtn.dataset.owner = owner;
             retestBtn.dataset.repo = repo;
             retestBtn.dataset.number = number;
             retestBtn.dataset.jobName = job.name;
             retestBtn.dataset.jobType = 'payload';
-            retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'payload'));
+
+            // Check if job is being polled
+            const jobKey = `${owner}/${repo}/${number}/${job.name}`;
+            if (retestedJobs.has(jobKey)) {
+                retestBtn.textContent = '⏳ Retesting...';
+                retestBtn.disabled = true;
+            } else {
+                retestBtn.textContent = 'Retest';
+                retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'payload'));
+            }
 
             const analyzeBtn = document.createElement('button');
             analyzeBtn.className = 'btn btn-secondary';
@@ -326,6 +381,32 @@ async function retestJob(owner, repo, pr, jobs, type) {
             disableAllRetestButtons();
         } else if (result.success) {
             showToast(`✅ Retest triggered for ${jobs.length} job(s)`, 'success');
+
+            // Track retested jobs and start polling
+            jobs.forEach(jobName => {
+                const jobKey = `${owner}/${repo}/${pr}/${jobName}`;
+                const startTime = Date.now();
+
+                // Start polling for this PR
+                const pollInterval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+
+                    // Stop polling after MAX_POLL_TIME
+                    if (elapsed > MAX_POLL_TIME) {
+                        clearInterval(pollInterval);
+                        retestedJobs.delete(jobKey);
+                        return;
+                    }
+
+                    // Reload job data for this PR
+                    const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
+                    if (card) {
+                        loadPRJobs(owner, repo, pr, card);
+                    }
+                }, POLL_INTERVAL);
+
+                retestedJobs.set(jobKey, { startTime, pollInterval });
+            });
         } else {
             showToast(`❌ Error: ${result.error}`, 'error');
         }
