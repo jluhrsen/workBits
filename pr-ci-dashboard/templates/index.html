@@ -8,12 +8,12 @@
         :root {
             --primary: #ee0000;
             --primary-dark: #c00000;
-            --bg-dark: #0f0f0f;
-            --bg-card: #1a1a1a;
-            --text-primary: #f5f5f5;
-            --text-secondary: #d4d4d4;
-            --border: #3d3d3d;
-            --success: #92cc6f;
+            --bg-light: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+            --success: #28a745;
         }
 
         * {
@@ -24,7 +24,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
+            background: var(--bg-light);
             color: var(--text-primary);
             line-height: 1.6;
         }
@@ -106,35 +106,38 @@
         .pr-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .pr-header {
-            margin-bottom: 1rem;
-        }
-
-        .pr-title {
-            font-size: 1.1rem;
             margin-bottom: 0.5rem;
         }
 
+        .pr-title {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
         .pr-meta {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
         }
 
         .job-section {
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             border-top: 1px solid var(--border);
-            padding-top: 1rem;
+            padding-top: 0.5rem;
         }
 
         .job-section-header {
             cursor: pointer;
-            padding: 0.5rem 0;
+            padding: 0.25rem 0;
             user-select: none;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .job-section-header:hover {
@@ -142,7 +145,7 @@
         }
 
         .job-list {
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
             display: none;
         }
 
@@ -151,9 +154,10 @@
         }
 
         .job-item {
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            background: var(--bg-dark);
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
             border-radius: 4px;
         }
 

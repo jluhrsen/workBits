@@ -124,7 +124,18 @@ function createPRCard(pr) {
 
     const prTitle = document.createElement('div');
     prTitle.className = 'pr-title';
-    prTitle.textContent = `PR #${pr.number} - ${pr.title}`;
+
+    // Create PR number link
+    const prLink = document.createElement('a');
+    prLink.href = `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`;
+    prLink.target = '_blank';
+    prLink.textContent = `#${pr.number}`;
+    prLink.style.color = 'var(--primary)';
+    prLink.style.textDecoration = 'none';
+    prLink.style.fontWeight = 'bold';
+
+    prTitle.appendChild(prLink);
+    prTitle.appendChild(document.createTextNode(` - ${pr.title}`));
 
     const prMeta = document.createElement('div');
     prMeta.className = 'pr-meta';
