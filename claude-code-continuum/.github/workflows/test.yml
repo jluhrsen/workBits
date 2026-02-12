@@ -1,5 +1,8 @@
 name: Tests
 
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
@@ -16,6 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -26,10 +30,7 @@ jobs:
         run: pytest tests/ -v --cov=container-files --cov-report=term
 
       - name: Install bats
-        run: |
-          git clone https://github.com/bats-core/bats-core.git
-          cd bats-core
-          sudo ./install.sh /usr/local
+        run: sudo npm install -g bats
 
       - name: Run wrapper script tests
         run: bats tests/test_ccc_wrapper.bats
