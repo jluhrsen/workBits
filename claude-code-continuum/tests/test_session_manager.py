@@ -33,3 +33,28 @@ def test_banner_shows_local_mode_when_no_repo():
         banner = manager.generate_banner('/workspace')
 
         assert 'local only' in banner.lower() or 'CONTINUUM_REPO_URL not set' in banner
+
+def test_sync_continuum_when_url_set(tmp_path):
+    """Test that session manager syncs continuum when URL is configured"""
+    continuum_dir = tmp_path / '.continuum'
+
+    with patch.dict(os.environ, {
+        'CONTINUUM_REPO_URL': 'git@github.com:test/continuum.git',
+        'HOME': str(tmp_path)
+    }):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            manager = SessionManager()
+            manager.sync_continuum()
+
+            # Should have attempted to clone or pull
+            mock_repo.return_value.clone_or_pull.assert_called_once()
+
+def test_no_sync_when_url_not_set(tmp_path):
+    """Test that session manager skips sync when no URL configured"""
+    with patch.dict(os.environ, {'CONTINUUM_REPO_URL': '', 'HOME': str(tmp_path)}):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            manager = SessionManager()
+            manager.sync_continuum()
+
+            # Should not attempt sync
+            mock_repo.return_value.clone_or_pull.assert_not_called()

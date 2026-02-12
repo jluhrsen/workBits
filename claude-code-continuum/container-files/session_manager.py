@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Optional
+from continuum import ContinuumRepo
 
 class SessionManager:
     """Manages CCC sessions and continuum repository synchronization"""
@@ -54,24 +55,43 @@ class SessionManager:
 
         return "\n".join(lines)
 
+    def sync_continuum(self) -> bool:
+        """Sync continuum repository if configured"""
+        if not self.continuum_repo_url:
+            return False
+
+        print("📡 Syncing continuum repository...")
+        repo = ContinuumRepo(str(self.continuum_path))
+        success = repo.clone_or_pull(self.continuum_repo_url)
+
+        if success:
+            print("✓ Continuum synced")
+        else:
+            print("⚠️  Warning: Failed to sync continuum repository")
+
+        return success
+
+    def list_sessions(self):
+        """List available sessions from continuum"""
+        repo = ContinuumRepo(str(self.continuum_path))
+        return repo.list_sessions()
+
     def run(self):
-        """Main entrypoint - show banner and start Claude"""
-        # Get current workspace
+        """Main entrypoint - show banner, sync, and start Claude"""
         workspace = os.getcwd()
 
         # Show banner
         print(self.generate_banner(workspace))
         print()
-        sys.stdout.flush()
+
+        # Sync continuum if configured
+        if self.continuum_repo_url:
+            self.sync_continuum()
+            print()
 
         # For now, just launch Claude directly
-        # TODO: Add session picker, sync, restore logic
-        try:
-            os.execvp('claude', ['claude'] + sys.argv[1:])
-        except OSError as e:
-            print(f"\n❌ Error launching Claude: {e}", file=sys.stderr)
-            print("Make sure Claude Code CLI is installed: npm install -g @anthropic-ai/claude-code", file=sys.stderr)
-            sys.exit(1)
+        # TODO: Add session picker and restore logic
+        os.execvp('claude', ['claude'] + sys.argv[1:])
 
 def main():
     manager = SessionManager()

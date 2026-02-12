@@ -83,8 +83,15 @@ RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_l
     rm gh.rpm && \
     sudo dnf clean all
 
-# Copy session manager
+# Install Python dependencies
+USER root
+RUN dnf install -y python3-pip && dnf clean all
+USER $USER_NAME
+RUN pip3 install --user pyyaml
+
+# Copy session manager and continuum module
 COPY --chown=$USER_NAME:$USER_NAME container-files/session_manager.py /home/$USER_NAME/session_manager.py
+COPY --chown=$USER_NAME:$USER_NAME container-files/continuum.py /home/$USER_NAME/continuum.py
 RUN chmod +x /home/$USER_NAME/session_manager.py
 
 # Set up basic shell
