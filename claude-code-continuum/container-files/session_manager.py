@@ -61,15 +61,19 @@ class SessionManager:
             return False
 
         print("📡 Syncing continuum repository...")
-        repo = ContinuumRepo(str(self.continuum_path))
-        success = repo.clone_or_pull(self.continuum_repo_url)
+        try:
+            repo = ContinuumRepo(str(self.continuum_path))
+            success = repo.clone_or_pull(self.continuum_repo_url)
 
-        if success:
-            print("✓ Continuum synced")
-        else:
-            print("⚠️  Warning: Failed to sync continuum repository")
+            if success:
+                print("✓ Continuum synced")
+            else:
+                print("⚠️  Warning: Failed to sync continuum repository")
 
-        return success
+            return success
+        except Exception as e:
+            print(f"⚠️  Warning: Failed to sync continuum repository: {e}")
+            return False
 
     def list_sessions(self):
         """List available sessions from continuum"""

@@ -46,8 +46,8 @@ def test_sync_continuum_when_url_set(tmp_path):
             manager = SessionManager()
             manager.sync_continuum()
 
-            # Should have attempted to clone or pull
-            mock_repo.return_value.clone_or_pull.assert_called_once()
+            # Should have attempted to clone or pull with correct URL
+            mock_repo.return_value.clone_or_pull.assert_called_once_with('git@github.com:test/continuum.git')
 
 def test_no_sync_when_url_not_set(tmp_path):
     """Test that session manager skips sync when no URL configured"""
@@ -58,3 +58,27 @@ def test_no_sync_when_url_not_set(tmp_path):
 
             # Should not attempt sync
             mock_repo.return_value.clone_or_pull.assert_not_called()
+
+def test_sync_continuum_returns_true_on_success(tmp_path):
+    """Test that sync_continuum returns True when sync succeeds"""
+    with patch.dict(os.environ, {
+        'CONTINUUM_REPO_URL': 'git@github.com:test/continuum.git',
+        'HOME': str(tmp_path)
+    }):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            mock_repo.return_value.clone_or_pull.return_value = True
+            manager = SessionManager()
+            result = manager.sync_continuum()
+            assert result is True
+
+def test_sync_continuum_returns_false_on_failure(tmp_path):
+    """Test that sync_continuum returns False when sync fails"""
+    with patch.dict(os.environ, {
+        'CONTINUUM_REPO_URL': 'git@github.com:test/continuum.git',
+        'HOME': str(tmp_path)
+    }):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            mock_repo.return_value.clone_or_pull.return_value = False
+            manager = SessionManager()
+            result = manager.sync_continuum()
+            assert result is False
