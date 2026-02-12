@@ -245,7 +245,12 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
                 retestBtn.disabled = true;
             } else {
                 retestBtn.textContent = 'Retest';
-                retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'e2e'));
+                retestBtn.addEventListener('click', (e) => {
+                    // Immediately update button state
+                    e.target.textContent = '⏳ Retesting...';
+                    e.target.disabled = true;
+                    retestJob(owner, repo, number, [job.name], 'e2e');
+                });
             }
 
             const analyzeBtn = document.createElement('button');
@@ -336,7 +341,12 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
                 retestBtn.disabled = true;
             } else {
                 retestBtn.textContent = 'Retest';
-                retestBtn.addEventListener('click', () => retestJob(owner, repo, number, [job.name], 'payload'));
+                retestBtn.addEventListener('click', (e) => {
+                    // Immediately update button state
+                    e.target.textContent = '⏳ Retesting...';
+                    e.target.disabled = true;
+                    retestJob(owner, repo, number, [job.name], 'payload');
+                });
             }
 
             const analyzeBtn = document.createElement('button');
