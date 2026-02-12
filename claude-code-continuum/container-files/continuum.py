@@ -32,12 +32,8 @@ class ContinuumRepo:
     ]
 
     DEFAULT_AUTO_LOAD_RULES = {
-        'rules': [
-            {
-                'repos': ['*'],
-                'load': ['git-workflows.md']
-            }
-        ]
+        'repos': ['*'],
+        'load': ['git-workflows.md']
     }
 
     def __init__(self, path: str):
