@@ -47,8 +47,13 @@ def search_prs(query: str, page: int = 1, per_page: int = 10) -> dict:
         prs = []
         for pr in raw_prs:
             repo_full = pr.get("repository", {})
-            owner = repo_full.get("owner", {}).get("login", "")
-            repo = repo_full.get("name", "")
+            # Parse owner/repo from nameWithOwner (e.g., "openshift/ovn-kubernetes")
+            name_with_owner = repo_full.get("nameWithOwner", "")
+            if "/" in name_with_owner:
+                owner, repo = name_with_owner.split("/", 1)
+            else:
+                owner = ""
+                repo = repo_full.get("name", "")
 
             prs.append({
                 "number": pr.get("number"),
