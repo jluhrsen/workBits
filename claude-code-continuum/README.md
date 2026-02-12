@@ -29,6 +29,17 @@ docker pull quay.io/jluhrsen/claude-code-continuum:latest
 
 See [Design Document](docs/plans/2026-02-10-claude-code-continuum-design.md) for architecture details.
 
+### Dependencies
+
+Container requires:
+- Python 3.11+
+- pyyaml (for auto-load rules)
+
+Install for local testing:
+```bash
+pip install pyyaml pytest pytest-cov
+```
+
 ## License
 
 Apache 2.0 License - see LICENSE file.
