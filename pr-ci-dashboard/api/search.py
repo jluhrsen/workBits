@@ -1,6 +1,7 @@
 """PR search via GitHub CLI."""
 import subprocess
 import json
+import shlex
 
 
 def search_prs(query: str, page: int = 1, per_page: int = 10) -> dict:
@@ -26,9 +27,12 @@ def search_prs(query: str, page: int = 1, per_page: int = 10) -> dict:
     """
     try:
         # Use gh search to find PRs
-        # Format: owner/repo#number
+        # Split query into separate arguments to avoid quoting issues
+        query_args = shlex.split(query) if query else []
+        cmd = ["gh", "search", "prs"] + query_args + ["--limit", str(per_page), "--json", "number,title,repository,author,createdAt,state"]
+
         result = subprocess.run(
-            ["gh", "search", "prs", query, "--limit", str(per_page), "--json", "number,title,repository,author,createdAt,state"],
+            cmd,
             capture_output=True,
             text=True,
             timeout=10
