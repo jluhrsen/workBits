@@ -19,8 +19,9 @@ Dashboard to see PR job failures and retest them.
 ## Installation
 
 ```bash
-# Clone repository
-cd /home/jamoluhrsen/repos/RedHat/workbits/pr-ci-dashboard
+# Clone repository and navigate to it
+git clone <repository-url>
+cd pr-ci-dashboard
 
 # Install dependencies
 pip install -r requirements.txt
@@ -129,7 +130,3 @@ gh auth login
 ## Documentation
 
 See [docs/design.md](docs/design.md) for the complete design document.
-
-## License
-
-See LICENSE for details.
