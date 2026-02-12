@@ -219,6 +219,8 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     e2eList.innerHTML = '';
 
     if (e2eFailed.length > 0) {
+        let activeRetestCount = 0;
+
         e2eFailed.forEach(job => {
             const jobItem = document.createElement('div');
             jobItem.className = 'job-item';
@@ -251,6 +253,7 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
                     e.target.disabled = true;
                     retestJob(owner, repo, number, [job.name], 'e2e');
                 });
+                activeRetestCount++; // Count non-retesting jobs
             }
 
             const analyzeBtn = document.createElement('button');
@@ -270,7 +273,15 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
         const retestAllBtn = document.createElement('button');
         retestAllBtn.className = 'btn';
         retestAllBtn.textContent = 'Retest All E2E';
-        retestAllBtn.addEventListener('click', () => retestAllE2E(owner, repo, number));
+
+        // Disable if all jobs are already being retested
+        if (activeRetestCount === 0) {
+            retestAllBtn.disabled = true;
+            retestAllBtn.textContent = 'Retest All E2E (all retesting...)';
+        } else {
+            retestAllBtn.addEventListener('click', () => retestAllE2E(owner, repo, number));
+        }
+
         e2eList.appendChild(retestAllBtn);
     } else {
         const noFailures = document.createElement('div');
@@ -315,6 +326,8 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
     payloadList.innerHTML = '';
 
     if (payloadFailed.length > 0) {
+        let activeRetestCount = 0;
+
         payloadFailed.forEach(job => {
             const jobItem = document.createElement('div');
             jobItem.className = 'job-item';
@@ -347,6 +360,7 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
                     e.target.disabled = true;
                     retestJob(owner, repo, number, [job.name], 'payload');
                 });
+                activeRetestCount++; // Count non-retesting jobs
             }
 
             const analyzeBtn = document.createElement('button');
@@ -366,7 +380,15 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
         const retestAllBtn = document.createElement('button');
         retestAllBtn.className = 'btn';
         retestAllBtn.textContent = 'Retest All Payload';
-        retestAllBtn.addEventListener('click', () => retestAllPayload(owner, repo, number));
+
+        // Disable if all jobs are already being retested
+        if (activeRetestCount === 0) {
+            retestAllBtn.disabled = true;
+            retestAllBtn.textContent = 'Retest All Payload (all retesting...)';
+        } else {
+            retestAllBtn.addEventListener('click', () => retestAllPayload(owner, repo, number));
+        }
+
         payloadList.appendChild(retestAllBtn);
     } else {
         const noFailures = document.createElement('div');
