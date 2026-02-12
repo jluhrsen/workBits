@@ -13,7 +13,6 @@ except ImportError:
     import re
     HAS_REGEX_MODULE = False
 
-import re
 from pathlib import Path
 from typing import List, Optional
 

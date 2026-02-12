@@ -87,7 +87,7 @@ RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_l
 USER root
 RUN dnf install -y python3-pip && dnf clean all
 USER $USER_NAME
-RUN pip3 install --user pyyaml
+RUN pip3 install --user pyyaml regex
 
 # Copy session manager and continuum module
 COPY --chown=$USER_NAME:$USER_NAME container-files/session_manager.py /home/$USER_NAME/session_manager.py

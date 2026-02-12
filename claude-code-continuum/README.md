@@ -34,10 +34,11 @@ See [Design Document](docs/plans/2026-02-10-claude-code-continuum-design.md) for
 Container requires:
 - Python 3.11+
 - pyyaml (for auto-load rules)
+- regex (for ReDoS protection, optional but recommended)
 
 Install for local testing:
 ```bash
-pip install pyyaml pytest pytest-cov
+pip install pyyaml regex pytest pytest-cov
 ```
 
 ## License
