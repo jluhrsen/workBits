@@ -29,6 +29,24 @@ docker pull quay.io/jluhrsen/claude-code-continuum:latest
 
 See [Design Document](docs/plans/2026-02-10-claude-code-continuum-design.md) for architecture details.
 
+## Development
+
+### GitHub Actions Setup
+
+For automated builds to Quay.io, configure these GitHub secrets:
+- `QUAY_USERNAME`: Your Quay.io username
+- `QUAY_PASSWORD`: Your Quay.io password or robot token
+
+### Running Tests
+
+```bash
+# Python tests
+pytest tests/ -v
+
+# Wrapper script tests (requires bats)
+bats tests/test_ccc_wrapper.bats
+```
+
 ## License
 
 Apache 2.0 License - see LICENSE file.
