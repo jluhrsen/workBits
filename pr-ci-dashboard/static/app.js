@@ -174,10 +174,15 @@ function createPRCard(pr) {
     payloadSection.appendChild(payloadHeader);
     payloadSection.appendChild(payloadList);
 
+    // Create job sections container (for side-by-side layout)
+    const jobSectionsContainer = document.createElement('div');
+    jobSectionsContainer.className = 'job-sections-container';
+    jobSectionsContainer.appendChild(e2eSection);
+    jobSectionsContainer.appendChild(payloadSection);
+
     // Assemble card
     card.appendChild(prHeader);
-    card.appendChild(e2eSection);
-    card.appendChild(payloadSection);
+    card.appendChild(jobSectionsContainer);
 
     return card;
 }

@@ -32,28 +32,41 @@
         .navbar {
             background: var(--bg-card);
             border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
+            padding: 0.5rem 1rem;
             display: flex;
-            justify-content: space-between;
+            gap: 1rem;
             align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
+        .navbar-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .navbar-search {
+            flex: 1;
+            display: flex;
+            gap: 0.5rem;
+        }
+
         h1 {
-            font-size: 1.5rem;
+            font-size: 1rem;
             color: var(--primary);
+            margin: 0;
         }
 
         .btn {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
         }
 
         .btn:hover {
@@ -73,71 +86,77 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0.5rem;
         }
 
         .banner {
             background: #856404;
             color: #fff3cd;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
         }
 
         .banner.hidden {
             display: none;
         }
 
-        .search-box {
+        .search-box-old {
             margin-bottom: 2rem;
         }
 
         .search-input {
-            width: 100%;
-            padding: 0.75rem;
+            padding: 0.25rem 0.5rem;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 3px;
             color: var(--text-primary);
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
         }
 
         .pr-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 0.25rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .pr-header {
-            margin-bottom: 0.5rem;
-        }
-
-        .pr-title {
-            font-size: 1rem;
             margin-bottom: 0.25rem;
         }
 
-        .pr-meta {
+        .pr-title {
             font-size: 0.85rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .pr-meta {
+            font-size: 0.7rem;
             color: var(--text-secondary);
         }
 
+        .job-sections-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
         .job-section {
-            margin-top: 0.5rem;
-            border-top: 1px solid var(--border);
-            padding-top: 0.5rem;
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.25rem;
         }
 
         .job-section-header {
             cursor: pointer;
-            padding: 0.25rem 0;
+            padding: 0.15rem 0.25rem;
             user-select: none;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 0.7rem;
+            font-weight: 600;
         }
 
         .job-section-header:hover {
@@ -145,7 +164,7 @@
         }
 
         .job-list {
-            margin-top: 0.25rem;
+            margin-top: 0.15rem;
             display: none;
         }
 
@@ -154,11 +173,12 @@
         }
 
         .job-item {
-            padding: 0.5rem;
-            margin: 0.25rem 0;
+            padding: 0.25rem;
+            margin: 0.15rem 0;
             background: var(--bg-light);
             border: 1px solid var(--border);
-            border-radius: 4px;
+            border-radius: 3px;
+            font-size: 0.7rem;
         }
 
         .job-name {
@@ -211,17 +231,19 @@
 </head>
 <body>
     <div class="navbar">
-        <h1>PR CI Dashboard</h1>
-        <button class="btn" id="refresh-btn">Refresh</button>
+        <div class="navbar-left">
+            <h1>PR CI Dashboard</h1>
+            <button class="btn" id="refresh-btn">Refresh</button>
+        </div>
+        <div class="navbar-search">
+            <input type="text" id="search-input" class="search-input" placeholder="Loading default query..." style="flex: 1;">
+            <button class="btn" id="search-btn">Search</button>
+        </div>
     </div>
 
     <div id="auth-banner" class="banner hidden"></div>
 
     <div class="container">
-        <div class="search-box">
-            <input type="text" id="search-input" class="search-input" placeholder="Loading default query...">
-            <button class="btn" id="search-btn">Search</button>
-        </div>
 
         <div id="pr-cards-container"></div>
 
