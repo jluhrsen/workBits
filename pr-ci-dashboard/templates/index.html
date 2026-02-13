@@ -27,30 +27,36 @@
             background: var(--bg-light);
             color: var(--text-primary);
             line-height: 1.6;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .navbar {
+        .sidebar {
+            width: 200px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
             background: var(--bg-card);
             border-bottom: 1px solid var(--border);
             padding: 0.5rem 1rem;
             display: flex;
-            gap: 1rem;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar-left {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .navbar-search {
-            flex: 1;
-            display: flex;
             gap: 0.5rem;
+            align-items: center;
         }
 
         h1 {
@@ -84,8 +90,8 @@
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            flex: 1;
+            overflow-y: auto;
             padding: 0.5rem;
         }
 
@@ -230,29 +236,30 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="navbar-left">
-            <h1>PR CI Dashboard</h1>
-            <button class="btn" id="refresh-btn">Refresh</button>
-        </div>
-        <div class="navbar-search">
+    <div class="sidebar">
+        <h1>PR CI Dashboard</h1>
+        <button class="btn" id="refresh-btn">Refresh</button>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
             <input type="text" id="search-input" class="search-input" placeholder="Loading default query..." style="flex: 1;">
             <button class="btn" id="search-btn">Search</button>
         </div>
+
+        <div id="auth-banner" class="banner hidden"></div>
+
+        <div class="container">
+
+            <div id="pr-cards-container"></div>
+
+            <button class="btn btn-secondary hidden" id="load-more-btn">
+                Load More (<span id="current-count">0</span> of <span id="total-count">0</span>)
+            </button>
+        </div>
+
+        <div class="toast-container" id="toast-container"></div>
     </div>
-
-    <div id="auth-banner" class="banner hidden"></div>
-
-    <div class="container">
-
-        <div id="pr-cards-container"></div>
-
-        <button class="btn btn-secondary hidden" id="load-more-btn">
-            Load More (<span id="current-count">0</span> of <span id="total-count">0</span>)
-        </button>
-    </div>
-
-    <div class="toast-container" id="toast-container"></div>
 
     <script src="/static/app.js"></script>
 </body>
