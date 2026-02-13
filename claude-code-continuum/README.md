@@ -41,6 +41,24 @@ Install for local testing:
 pip install pyyaml regex pytest pytest-cov
 ```
 
+## Development
+
+### GitHub Actions Setup
+
+For automated builds to Quay.io, configure these GitHub secrets:
+- `QUAY_USERNAME`: Your Quay.io username
+- `QUAY_PASSWORD`: Your Quay.io password or robot token
+
+### Running Tests
+
+```bash
+# Python tests
+pytest tests/ -v
+
+# Wrapper script tests (requires bats)
+bats tests/test_ccc_wrapper.bats
+```
+
 ## License
 
 Apache 2.0 License - see LICENSE file.
