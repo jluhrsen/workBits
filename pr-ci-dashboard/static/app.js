@@ -280,8 +280,8 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
             jobActions.appendChild(retestBtn);
             jobActions.appendChild(analyzeBtn);
 
-            jobItem.appendChild(jobName);
             jobItem.appendChild(jobActions);
+            jobItem.appendChild(jobName);
 
             e2eList.appendChild(jobItem);
         });
@@ -387,8 +387,8 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
             jobActions.appendChild(retestBtn);
             jobActions.appendChild(analyzeBtn);
 
-            jobItem.appendChild(jobName);
             jobItem.appendChild(jobActions);
+            jobItem.appendChild(jobName);
 
             payloadList.appendChild(jobItem);
         });
