@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PR CI Dashboard</title>
+    <title>Flake Buster - PR CI Dashboard</title>
     <style>
         :root {
             --primary: #ee0000;
@@ -69,10 +69,10 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.25rem 0.5rem;
-            border-radius: 3px;
+            padding: 0.125rem 0.25rem;
+            border-radius: 2px;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.6rem;
         }
 
         .btn:hover {
@@ -85,8 +85,14 @@
         }
 
         .btn-secondary {
-            background: var(--bg-card);
+            background: #e8e8e8;
+            color: var(--text-secondary);
             border: 1px solid var(--border);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.7;
+            color: #999999;
         }
 
         .container {
@@ -135,7 +141,8 @@
         }
 
         .pr-title {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
+            font-weight: bold;
             margin-bottom: 0.1rem;
         }
 
@@ -240,7 +247,7 @@
 </head>
 <body>
     <div class="sidebar">
-        <h1>PR CI Dashboard</h1>
+        <h1>👻🚫 Flake Buster</h1>
         <button class="btn" id="refresh-btn">Refresh</button>
     </div>
 
