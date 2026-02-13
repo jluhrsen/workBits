@@ -295,7 +295,7 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
             retestAllBtn.disabled = true;
             retestAllBtn.textContent = 'Retest All E2E (all retesting...)';
         } else {
-            retestAllBtn.addEventListener('click', () => retestAllE2E(owner, repo, number));
+            retestAllBtn.addEventListener('click', (e) => retestAllE2E(owner, repo, number, e));
         }
 
         e2eList.appendChild(retestAllBtn);
@@ -402,7 +402,7 @@ function updateCardWithJobs(cardElement, data, owner, repo, number) {
             retestAllBtn.disabled = true;
             retestAllBtn.textContent = 'Retest All Payload (all retesting...)';
         } else {
-            retestAllBtn.addEventListener('click', () => retestAllPayload(owner, repo, number));
+            retestAllBtn.addEventListener('click', (e) => retestAllPayload(owner, repo, number, e));
         }
 
         payloadList.appendChild(retestAllBtn);
@@ -464,7 +464,13 @@ async function retestJob(owner, repo, pr, jobs, type) {
     }
 }
 
-function retestAllE2E(owner, repo, pr) {
+function retestAllE2E(owner, repo, pr, event) {
+    // Immediately disable the button
+    if (event && event.target) {
+        event.target.disabled = true;
+        event.target.textContent = '⏳ Retesting all...';
+    }
+
     const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
     const e2eSection = card.querySelector(`#e2e-${owner}-${repo}-${pr}`);
     const jobItems = e2eSection.querySelectorAll('.job-item');
@@ -478,7 +484,13 @@ function retestAllE2E(owner, repo, pr) {
     retestJob(owner, repo, pr, jobs, 'e2e');
 }
 
-function retestAllPayload(owner, repo, pr) {
+function retestAllPayload(owner, repo, pr, event) {
+    // Immediately disable the button
+    if (event && event.target) {
+        event.target.disabled = true;
+        event.target.textContent = '⏳ Retesting all...';
+    }
+
     const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
     const payloadSection = card.querySelector(`#payload-${owner}-${repo}-${pr}`);
     const jobItems = payloadSection.querySelectorAll('.job-item');
