@@ -75,11 +75,16 @@ RUN GOARCH=${TARGETARCH} sh -c "curl -sSfL https://raw.githubusercontent.com/gol
 
 # Install oc (OpenShift CLI) - architecture-aware, updated to 4.21
 ARG OC_VERSION=4.21.2
-RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-4.21.2.tar.gz" -o oc.tar.gz && \
+RUN echo "Building for architecture: ${TARGETARCH}" && \
+    echo "Downloading from: https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" && \
+    curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" -o oc.tar.gz && \
+    echo "Download complete, extracting..." && \
     tar -xzf oc.tar.gz -C /tmp && \
+    echo "Extract complete, installing..." && \
     sudo mv /tmp/oc /usr/local/bin/ && \
     sudo mv /tmp/kubectl /usr/local/bin/ && \
-    rm oc.tar.gz
+    rm oc.tar.gz && \
+    echo "oc installation complete"
 
 # Install gh CLI - architecture-aware
 RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_linux_${TARGETARCH}.rpm" -o gh.rpm && \
