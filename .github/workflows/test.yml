@@ -27,10 +27,12 @@ jobs:
           pip install pytest pytest-cov
 
       - name: Run Python tests
+        working-directory: ./claude-code-continuum
         run: pytest tests/ -v --cov=container-files --cov-report=term
 
       - name: Install bats
         run: sudo npm install -g bats
 
       - name: Run wrapper script tests
+        working-directory: ./claude-code-continuum
         run: bats tests/test_ccc_wrapper.bats
