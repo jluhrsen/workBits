@@ -74,7 +74,7 @@ RUN GOARCH=${TARGETARCH} sh -c "curl -sSfL https://raw.githubusercontent.com/gol
 # Install oc (OpenShift CLI) - architecture-aware, updated to 4.21
 ARG TARGETARCH
 ARG OC_VERSION=4.21.2
-RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-4.21.2.tar.gz -o oc.tar.gz &&
+RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-4.21.2.tar.gz" -o oc.tar.gz && \
     tar -xzf oc.tar.gz -C /tmp && \
     sudo mv /tmp/oc /usr/local/bin/ && \
     sudo mv /tmp/kubectl /usr/local/bin/ && \
