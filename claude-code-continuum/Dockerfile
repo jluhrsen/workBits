@@ -73,24 +73,25 @@ COPY --chown=$USER_NAME:$USER_NAME container-files/.zshrc /home/$USER_NAME/.zshr
 # Install golangci-lint - architecture-aware
 RUN GOARCH=${TARGETARCH} sh -c "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2"
 
+# Switch to root for system-level installations
+USER root
+
 # Install oc (OpenShift CLI) - architecture-aware, updated to 4.21
 ARG OC_VERSION=4.21.2
-RUN echo "Building for architecture: ${TARGETARCH}" && \
-    echo "Downloading from: https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" && \
-    curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" -o oc.tar.gz && \
-    echo "Download complete, extracting..." && \
+RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" -o oc.tar.gz && \
     tar -xzf oc.tar.gz -C /tmp && \
-    echo "Extract complete, installing..." && \
-    sudo mv /tmp/oc /usr/local/bin/ && \
-    sudo mv /tmp/kubectl /usr/local/bin/ && \
-    rm oc.tar.gz && \
-    echo "oc installation complete"
+    mv /tmp/oc /usr/local/bin/ && \
+    mv /tmp/kubectl /usr/local/bin/ && \
+    rm oc.tar.gz
 
 # Install gh CLI - architecture-aware
 RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_linux_${TARGETARCH}.rpm" -o gh.rpm && \
-    sudo dnf install -y ./gh.rpm && \
+    dnf install -y ./gh.rpm && \
     rm gh.rpm && \
-    sudo dnf clean all
+    dnf clean all
+
+# Switch back to non-root user
+USER $USER_NAME
 
 # Install Python dependencies
 USER root
