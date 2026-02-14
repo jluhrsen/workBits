@@ -3,6 +3,9 @@
 
 FROM registry.access.redhat.com/ubi9/ubi:latest
 
+# Declare TARGETARCH for multi-platform builds (set automatically by buildx)
+ARG TARGETARCH
+
 LABEL maintainer="jluhrsen"
 LABEL description="Claude Code Continuum - pause anywhere, resume everywhere"
 LABEL version="0.1.0"
@@ -68,11 +71,9 @@ RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUS
 COPY --chown=$USER_NAME:$USER_NAME container-files/.zshrc /home/$USER_NAME/.zshrc
 
 # Install golangci-lint - architecture-aware
-ARG TARGETARCH
 RUN GOARCH=${TARGETARCH} sh -c "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2"
 
 # Install oc (OpenShift CLI) - architecture-aware, updated to 4.21
-ARG TARGETARCH
 ARG OC_VERSION=4.21.2
 RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-4.21.2.tar.gz" -o oc.tar.gz && \
     tar -xzf oc.tar.gz -C /tmp && \
@@ -81,7 +82,6 @@ RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clie
     rm oc.tar.gz
 
 # Install gh CLI - architecture-aware
-ARG TARGETARCH
 RUN curl -fsSL "https://github.com/cli/cli/releases/download/v2.43.1/gh_2.43.1_linux_${TARGETARCH}.rpm" -o gh.rpm && \
     sudo dnf install -y ./gh.rpm && \
     rm gh.rpm && \
