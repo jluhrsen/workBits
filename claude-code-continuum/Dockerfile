@@ -43,9 +43,9 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
 # Install Claude Code CLI globally (before switching to non-root user)
 RUN npm install -g @anthropic-ai/claude-code
 
-# Install Go (latest stable)
+# Install Go (latest stable) - architecture-aware
 ARG GO_VERSION=1.22.0
-RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -o go.tar.gz && \
+RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o go.tar.gz && \
     tar -C /usr/local -xzf go.tar.gz && \
     rm go.tar.gz
 
