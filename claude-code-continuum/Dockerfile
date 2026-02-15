@@ -43,14 +43,11 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
 # Install Claude Code CLI globally (before switching to non-root user)
 RUN npm install -g @anthropic-ai/claude-code
 
-# Install Go (latest stable) - architecture-aware
-# Exclude testdata to avoid QEMU emulation issues with long paths in multi-platform builds
-ARG GO_VERSION=1.22.0
-RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o go.tar.gz && \
-    tar -C /usr/local -xzf go.tar.gz --exclude='*/testdata' --exclude='go/test' --exclude='go/misc' && \
-    rm go.tar.gz
+# Install Go from UBI9 repos (avoids QEMU emulation issues with multi-platform builds)
+RUN dnf install -y golang && \
+    dnf clean all
 
-ENV PATH="/usr/local/go/bin:${PATH}"
+# Go is installed to /usr/bin/go by dnf
 ENV GOPATH="/home/${USER_NAME}/go"
 ENV PATH="${GOPATH}/bin:${PATH}"
 
