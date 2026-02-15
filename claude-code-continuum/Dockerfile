@@ -44,9 +44,10 @@ RUN curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - && \
 RUN npm install -g @anthropic-ai/claude-code
 
 # Install Go (latest stable) - architecture-aware
+# Exclude testdata to avoid QEMU emulation issues with long paths in multi-platform builds
 ARG GO_VERSION=1.22.0
 RUN curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o go.tar.gz && \
-    tar -C /usr/local -xzf go.tar.gz && \
+    tar -C /usr/local -xzf go.tar.gz --exclude='*/testdata' --exclude='go/test' --exclude='go/misc' && \
     rm go.tar.gz
 
 ENV PATH="/usr/local/go/bin:${PATH}"
