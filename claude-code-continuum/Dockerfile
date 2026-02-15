@@ -68,8 +68,8 @@ RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUS
 # Copy sanitized .zshrc
 COPY --chown=$USER_NAME:$USER_NAME container-files/.zshrc /home/$USER_NAME/.zshrc
 
-# Install golangci-lint - architecture-aware
-RUN GOARCH=${TARGETARCH} sh -c "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.2"
+# Note: golangci-lint installation skipped due to QEMU tar extraction issues
+# Users can install it manually with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 # Switch to root for system-level installations
 USER root
