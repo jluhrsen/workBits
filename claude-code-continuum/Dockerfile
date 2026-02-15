@@ -68,11 +68,15 @@ RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUS
 # Copy sanitized .zshrc
 COPY --chown=$USER_NAME:$USER_NAME container-files/.zshrc /home/$USER_NAME/.zshrc
 
-# Note: golangci-lint installation skipped due to QEMU tar extraction issues
-# Users can install it manually with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
 # Switch to root for system-level installations
 USER root
+
+# Install golangci-lint from RPM (avoids QEMU tar extraction issues)
+ARG GOLANGCI_LINT_VERSION=2.9.0
+RUN curl -fsSL "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${TARGETARCH}.rpm" -o golangci-lint.rpm && \
+    dnf install -y ./golangci-lint.rpm && \
+    rm golangci-lint.rpm && \
+    dnf clean all
 
 # Install oc (OpenShift CLI) - architecture-aware, updated to 4.21
 ARG OC_VERSION=4.21.2
