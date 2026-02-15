@@ -1,6 +1,6 @@
 # Flake Buster - How To Guide
 
-👻🚫 **Flake Buster** is your dashboard for hunting down flaky CI tests in OpenShift PRs.
+👻🚫 **Flake Buster** is your dashboard for quickly knowing e2e/payload failures in your PRs.
 
 ## Quick Start (Recommended)
 
@@ -14,7 +14,7 @@ Then open **http://localhost:5000** in your browser.
 
 Press Ctrl+C to stop and clean up.
 
-### With Custom Search Filters
+### With Custom Search Filters (add github search syntax after `sh`)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jluhrsen/workBits/main/pr-ci-dashboard/run.sh | sh -s -- author:jluhrsen
@@ -61,43 +61,3 @@ Default search: `is:pr is:open archived:false author:openshift-pr-manager[bot]`
 - **PR links**: Click the red PR number to open on GitHub
 
 Retest buttons show "⏳ Retesting..." and poll until the job starts running.
-
-## Configuration
-
-**Script source**: Set `AI_HELPERS_BRANCH` environment variable (default: `refs/pull/177/head`, use `main` after merge)
-```bash
-export AI_HELPERS_BRANCH=main
-```
-
-**Port**: Default is 5000. Edit `server.py` line 111 to change.
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "GitHub CLI not authenticated" | Run `gh auth login` |
-| "Failed to fetch scripts" | Check internet connection, try `export AI_HELPERS_BRANCH=main` |
-| No PRs showing up | Verify search syntax, test query at https://github.com/pulls |
-| Slow loading (10-30s) | Normal - scripts query CI systems in real-time |
-| Retest stuck | Refresh page, or wait (auto-stops after 5 min) |
-| Script timeouts | Check network, increase timeout in `utils/job_executor.py` |
-
-## Advanced Usage
-
-**Run in background:**
-```bash
-nohup python server.py > dashboard.log 2>&1 &
-```
-
-**Access from network:** Server binds to `0.0.0.0:5000` (no auth - trusted networks only)
-
-**Saved queries:** Bookmark search commands for quick access
-- Your PRs: `python server.py author:yourusername`
-- Specific repo: `python server.py repo:openshift/ovn-kubernetes`
-
-## Getting Help
-
-- Issues: https://github.com/jluhrsen/workBits/issues
-- Design doc: `docs/design.md`
-
-Happy flake busting! 👻🚫
