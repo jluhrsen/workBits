@@ -55,6 +55,9 @@ ENV PATH="${GOPATH}/bin:${PATH}"
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 
+# Create .ssh directory for SSH keys and known_hosts
+RUN mkdir -p /home/$USER_NAME/.ssh && chmod 700 /home/$USER_NAME/.ssh
+
 # Install oh-my-zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
