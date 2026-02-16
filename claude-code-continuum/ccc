@@ -54,13 +54,32 @@ validate_setup() {
     return 0
 }
 
-# Build Docker run command with appropriate mounts
+# Detect container runtime
+detect_runtime() {
+    if command -v podman &>/dev/null; then
+        echo "podman"
+    elif command -v docker &>/dev/null; then
+        echo "docker"
+    else
+        error "Neither podman nor docker found!"
+        exit 1
+    fi
+}
+
+# Build container run command with appropriate mounts
 build_docker_cmd() {
     local docker_args=()
+    local runtime
+    runtime=$(detect_runtime)
 
     # Basic container setup
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
+
+    # For podman: run as current user to avoid UID mapping issues
+    if [[ "$runtime" == "podman" ]]; then
+        docker_args+=(--user "$(id -u):$(id -g)")
+    fi
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
@@ -69,14 +88,19 @@ build_docker_cmd() {
     # Whitelist /tmp
     docker_args+=(-v /tmp:/tmp)
 
-    # Mount Claude authentication (read-only)
+    # Mount Claude authentication (read-write - Claude Code needs to save state)
     if [[ -d "$HOME/.claude" ]]; then
-        docker_args+=(-v "$HOME/.claude:/home/$CONTAINER_USER/.claude:ro")
+        docker_args+=(-v "$HOME/.claude:/home/$CONTAINER_USER/.claude:rw")
     fi
 
     # Mount GCP credentials for Vertex AI (read-only)
     if [[ -d "$HOME/.config/gcloud" ]]; then
         docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
+    fi
+
+    # Mount SSH known_hosts for git operations (read-write)
+    if [[ -f "$HOME/.ssh/known_hosts" ]]; then
+        docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
     fi
 
     # Mount continuum deploy key if configured (read-only)
@@ -135,12 +159,16 @@ EOF
         exit 0
     fi
 
-    # Build docker command
+    # Build container command
     local docker_args
     docker_args=($(build_docker_cmd))
 
+    # Detect runtime
+    local runtime
+    runtime=$(detect_runtime)
+
     # Run container
-    exec docker run "${docker_args[@]}" "$CONTAINER_IMAGE" "$@"
+    exec "$runtime" run "${docker_args[@]}" "$CONTAINER_IMAGE" "$@"
 }
 
 main "$@"
