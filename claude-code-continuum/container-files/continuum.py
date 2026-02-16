@@ -141,15 +141,21 @@ class ContinuumRepo:
                         ['git', '-C', str(self.path), 'add', '.'],
                         check=True
                     )
-                    subprocess.run(
-                        ['git', '-C', str(self.path), 'commit', '-m', 'Initialize continuum structure'],
-                        check=True
+                    # Only commit if there are changes
+                    result = subprocess.run(
+                        ['git', '-C', str(self.path), 'diff', '--cached', '--quiet'],
+                        capture_output=True
                     )
-                    subprocess.run(
-                        ['git', '-C', str(self.path), 'push'],
-                        check=True,
-                        env=git_env
-                    )
+                    if result.returncode != 0:  # Non-zero means there are changes
+                        subprocess.run(
+                            ['git', '-C', str(self.path), 'commit', '-m', 'Initialize continuum structure'],
+                            check=True
+                        )
+                        subprocess.run(
+                            ['git', '-C', str(self.path), 'push'],
+                            check=True,
+                            env=git_env
+                        )
 
             return True
         except subprocess.CalledProcessError as e:
