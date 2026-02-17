@@ -1,8 +1,8 @@
 # Claude Code Continuum - Project Status
 
-**Date:** 2026-02-13
+**Date:** 2026-02-17
 **Last Updated By:** Claude Sonnet 4.5
-**Session Context:** Building and debugging the CCC container image
+**Session Context:** Weekend work integrated - CI/CD working, images published, wrapper script fixed for podman
 
 ---
 
@@ -62,39 +62,37 @@ Build a containerized Claude Code environment that enables **"pause anywhere, re
 
 ---
 
-## 🏗️ Current Status: DEBUGGING CI BUILD
+## 🏗️ Current Status: READY FOR END-TO-END TESTING ✅
 
-### The Problem
-GitHub Actions multi-platform build is failing when installing OpenShift CLI (oc).
+### Weekend Progress Summary (2026-02-15/16)
 
-**Error:**
-```
-RUN curl -fsSL "https://mirror.openshift.com/pub/openshift-v4/${TARGETARCH}/clients/ocp/${OC_VERSION}/openshift-client-linux-${OC_VERSION}.tar.gz" -o oc.tar.gz && ...
-ERROR: failed to solve: process ... did not complete successfully: exit code: 1
-```
+The CI/CD build issues have been **resolved**! Weekend work with another Claude instance fixed all blocking issues:
 
-**What We Know:**
-- ✅ Both URLs work (tested manually):
-  - `https://mirror.openshift.com/pub/openshift-v4/amd64/clients/ocp/4.21.2/openshift-client-linux-4.21.2.tar.gz`
-  - `https://mirror.openshift.com/pub/openshift-v4/arm64/clients/ocp/4.21.2/openshift-client-linux-4.21.2.tar.gz`
-- ✅ Local podman build succeeds (amd64)
-- ❌ GitHub Actions multi-platform build fails
-- 🔍 Added debug output to identify failing step (commit 3f67a7c)
+**✅ CI/CD Build Fixed:**
+- Switched from downloading tarballs to using distro packages (avoids QEMU emulation issues)
+- Go installed via `dnf install golang` instead of tarball extraction
+- golangci-lint installed via RPM package instead of shell script
+- Multi-platform builds (amd64 + arm64) now succeed
+- Images published to `quay.io/jluhrsen/claude-code-continuum:latest`
 
-**Last Commit:** `3f67a7c` - Added verbose logging to oc installation
+**✅ Wrapper Script Improvements:**
+- Auto-detects podman vs docker runtime
+- Fixed podman rootless UID namespace mapping with `:U` flag for SSH mounts
+- SSH keys and known_hosts now have correct ownership inside container
+- Removed `.claude` mount that was causing hangs
 
-**Next Action:**
-1. Wait for CI build to show debug output
-2. Identify which step fails (download? extract? install?)
-3. Fix the root cause
+**✅ Continuum Module Fixes:**
+- Only commits to vault when there are actual changes (no empty commits)
+- Improved git workflow handling
 
-### Recent Fixes Applied
-1. ✅ Made Dockerfile multi-architecture aware (declared `ARG TARGETARCH` globally)
-2. ✅ Updated OpenShift CLI from 4.15.2 to 4.21.2
-3. ✅ Added pyyaml and regex to test dependencies
-4. ✅ Fixed missing closing quote in curl command
-5. ✅ Moved `.github/workflows/` to repo root for monorepo structure
-6. ✅ Updated workflow contexts to `./claude-code-continuum`
+### Recent Fixes Applied (Weekend + Today)
+1. ✅ Switched to distro packages (Go, golangci-lint) to avoid QEMU issues
+2. ✅ Multi-platform Docker builds now pass for amd64 and arm64
+3. ✅ Images successfully published to quay.io
+4. ✅ Podman runtime auto-detection in wrapper script
+5. ✅ SSH mount permissions fixed with `:U` flag (podman-specific)
+6. ✅ Removed `.claude` mount that caused container hangs
+7. ✅ Continuum git workflow improved (no empty commits)
 
 ---
 
@@ -142,7 +140,7 @@ ccc-vault/
 
 ### CI/CD Testing
 ✅ **Test Workflow:** Passes (pytest + bats with pyyaml and regex)
-❌ **Build Workflow:** FAILING on oc installation (multi-platform)
+✅ **Build Workflow:** PASSING - Multi-platform builds (amd64 + arm64) succeed and push to quay.io
 
 **Test Commands:**
 ```bash
@@ -192,20 +190,25 @@ These features are in the design but not yet built:
 ## 🐛 Known Issues
 
 ### Critical (Blocking)
-1. **Multi-platform Docker build fails on oc installation**
-   - Status: DEBUGGING (added verbose output)
-   - Impact: Can't push images to quay.io
-   - Workaround: Local builds work
+**None** - All blocking issues resolved! 🎉
+
+### Recently Fixed
+1. **✅ Multi-platform Docker build on oc installation (Fixed 2026-02-15)**
+   - Root cause: QEMU emulation issues with tarball extraction
+   - Solution: Switched to distro packages (RPM) for Go and golangci-lint
+   - Status: CI/CD builds pass, images published to quay.io
+
+2. **✅ SSH permission errors with podman (Fixed 2026-02-17)**
+   - Root cause: Podman rootless UID namespace mapping
+   - Solution: Added `:U` flag to SSH mounts (podman-specific)
+   - Status: SSH keys and known_hosts have correct ownership in container
 
 ### Minor (Non-blocking)
-1. **Docker daemon not running on dev machine**
-   - Workaround: Using podman instead
-   - Impact: `ccc` script needs `sed -i 's/docker run/podman run/g' ccc`
-
-2. **Container needs Claude credentials**
-   - Need to mount `~/.claude/` with valid auth
-   - Need GCP credentials for Vertex AI
-   - Current: Shows "Not logged in" without credentials
+1. **Container needs Claude credentials for full functionality**
+   - Need to mount `~/.config/gcloud/` with valid GCP auth for Vertex AI
+   - Or set `ANTHROPIC_API_KEY` for direct API access
+   - Current: Container works but shows "Not logged in" without credentials
+   - Impact: Can't make Claude API calls without proper auth
 
 ---
 
@@ -277,23 +280,29 @@ cd ccc-vault-test && tree -L 2
 
 ## 🎯 Immediate Next Steps
 
-1. **Fix CI Build** (URGENT)
-   - Wait for debug output from commit 3f67a7c
-   - Identify which command is failing
-   - Fix root cause (likely URL pattern or sudo permissions)
+1. **✅ DONE: Fix CI Build**
+   - Fixed with distro packages approach (weekend work)
+   - Both amd64 and arm64 builds passing
+   - Images published to quay.io
 
-2. **Verify Multi-Platform Build**
-   - Ensure both amd64 and arm64 images build successfully
-   - Verify images push to quay.io
+2. **✅ DONE: Verify Multi-Platform Build**
+   - Images available at `quay.io/jluhrsen/claude-code-continuum:latest`
+   - Both architectures confirmed working
 
-3. **Test End-to-End**
-   - Pull image from quay.io: `podman pull quay.io/jluhrsen/claude-code-continuum:latest`
-   - Test `ccc` wrapper with real credentials
-   - Verify continuum sync works in production
+3. **✅ DONE: Fix Podman SSH Permissions**
+   - Added `:U` flag for podman mounts
+   - SSH keys have correct ownership in container
 
-4. **Consider Next Phase** (After CI is green)
+4. **READY: Test End-to-End**
+   - Run `./ccc` to verify the wrapper works end-to-end
+   - Verify continuum vault syncs successfully
+   - Confirm Claude Code launches inside container
+   - Test with actual GCP/Vertex AI credentials
+
+5. **Next Phase: Core Features** (After end-to-end testing passes)
    - Session picker UI implementation
-   - `/nightnight` skill for snapshots
+   - `/nightnight` skill for creating snapshots
+   - Session restore from vault
    - Command blocklist runtime integration
 
 ---
@@ -324,27 +333,43 @@ cd ccc-vault-test && tree -L 2
 
 ## 💡 Context for Next Claude Instance
 
-**What You're Debugging:**
-The GitHub Actions multi-platform Docker build fails when installing the OpenShift CLI (oc). We've added verbose debugging output to identify which step fails. The latest commit (3f67a7c) adds echo statements before each command in the oc installation RUN block.
+**What's Working:**
+✅ CI/CD builds pass for both amd64 and arm64
+✅ Images published to `quay.io/jluhrsen/claude-code-continuum:latest`
+✅ Wrapper script (`ccc`) auto-detects podman vs docker
+✅ SSH mount permissions fixed with `:U` flag for podman
+✅ Continuum vault repository initialized and working
 
-**What to Check:**
-1. Go to https://github.com/jluhrsen/workBits/actions
-2. Look at the latest "Build and Push to Quay.io" workflow run
-3. Check the build logs for the debug output we added
-4. You should see lines like:
-   - "Building for architecture: amd64" or "arm64"
-   - "Downloading from: https://mirror.openshift.com/pub/openshift-v4/..."
-   - Which step succeeds or fails
+**Current State:**
+The core infrastructure is **complete and functional**. Weekend work (2026-02-15/16) resolved all CI/CD build issues by switching from tarball downloads to distro packages (avoiding QEMU emulation problems). Today (2026-02-17) fixed SSH permission issues with podman rootless mode.
 
-**Likely Causes:**
-- Network/firewall issue in GitHub Actions runners
-- Permission issue with sudo in multi-platform context
-- File not found in tarball (naming mismatch)
-- Race condition between platforms
+**What's Ready for Testing:**
+1. Pull the latest image: `podman pull quay.io/jluhrsen/claude-code-continuum:latest`
+2. Run `./ccc` to test end-to-end functionality
+3. Verify continuum vault syncs properly
+4. Confirm Claude Code launches and can make API calls
 
-**How to Fix:**
-Once you see the debug output, you'll know exactly which command fails and can fix it directly in the Dockerfile. The user has been very patient and helpful throughout this debugging process!
+**What's Next (After Testing Passes):**
+- **Session picker UI** - Interactive menu for choosing/creating sessions
+- **`/nightnight` skill** - Create session snapshots with WIP branch handling
+- **Session restore** - Resume from vault snapshots
+- **Command blocklist integration** - Wire up the existing blocklist module into Claude's runtime
+
+**Key Files to Know:**
+- `ccc` - Wrapper script (bash) that launches containers
+- `Dockerfile` - UBI9-based container image definition
+- `container-files/session_manager.py` - Python entrypoint showing banner and syncing vault
+- `container-files/continuum.py` - Git-backed session storage module
+- `docs/PROJECT_STATUS.md` - This file (keep it updated!)
+
+**Environment Setup:**
+```bash
+export CONTINUUM_REPO_URL=git@github.com:jluhrsen/ccc-vault.git
+export CLAUDE_CODE_USE_VERTEX=1
+export GCP_ID=itpc-gcp-hybrid-pe-eng-claude
+export CLOUD_ML_REGION=us-east5
+```
 
 ---
 
-**Good luck! The finish line is close - we just need to get this build working! 🚀**
+**The foundation is solid. Time to build the session management features! 🚀**
