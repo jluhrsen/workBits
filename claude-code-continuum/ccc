@@ -76,10 +76,9 @@ build_docker_cmd() {
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
 
-    # For podman: run as current user to avoid UID mapping issues
-    if [[ "$runtime" == "podman" ]]; then
-        docker_args+=(--user "$(id -u):$(id -g)")
-    fi
+    # Note: Container runs as UID 1000 (claude user) by default
+    # If host user is also UID 1000, file permissions will work naturally
+    # For non-1000 users, they may need to adjust file permissions or use :U on mounts
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
@@ -88,10 +87,8 @@ build_docker_cmd() {
     # Whitelist /tmp
     docker_args+=(-v /tmp:/tmp)
 
-    # Mount Claude authentication (read-write - Claude Code needs to save state)
-    if [[ -d "$HOME/.claude" ]]; then
-        docker_args+=(-v "$HOME/.claude:/home/$CONTAINER_USER/.claude:rw")
-    fi
+    # Note: .claude directory is NOT mounted - each container session is isolated
+    # Session state is managed by the continuum vault, not host .claude state
 
     # Mount GCP credentials for Vertex AI (read-only)
     if [[ -d "$HOME/.config/gcloud" ]]; then
