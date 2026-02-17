@@ -76,10 +76,9 @@ build_docker_cmd() {
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
 
-    # For podman: run as current user to avoid UID mapping issues
-    if [[ "$runtime" == "podman" ]]; then
-        docker_args+=(--user "$(id -u):$(id -g)")
-    fi
+    # Container runs as UID 1000 (claude user) by default
+    # This works naturally if host user is also UID 1000
+    # File ownership on mounts will match, avoiding permission issues
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
@@ -97,14 +96,24 @@ build_docker_cmd() {
     fi
 
     # Mount SSH known_hosts for git operations (read-write)
+    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -f "$HOME/.ssh/known_hosts" ]]; then
-        docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
+        if [[ "$runtime" == "podman" ]]; then
+            docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw,U")
+        else
+            docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
+        fi
     fi
 
     # Mount continuum deploy key if configured (read-only)
+    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -n "${CONTINUUM_REPO_URL:-}" ]]; then
         KEY_FILE="${CONTINUUM_KEY_PATH:-$HOME/.ssh/continuum_deploy_key}"
-        docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
+        if [[ "$runtime" == "podman" ]]; then
+            docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro,U")
+        else
+            docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
+        fi
     fi
 
     # Pass through Claude-related env vars
