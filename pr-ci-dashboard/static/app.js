@@ -481,6 +481,15 @@ function retestAllE2E(owner, repo, pr, event) {
         return match ? match[1] : null;
     }).filter(Boolean);
 
+    // Immediately disable all individual retest buttons
+    jobItems.forEach(item => {
+        const retestBtn = item.querySelector('button.btn:not(.btn-secondary)');
+        if (retestBtn && !retestBtn.disabled) {
+            retestBtn.textContent = '⏳ Retesting...';
+            retestBtn.disabled = true;
+        }
+    });
+
     retestJob(owner, repo, pr, jobs, 'e2e');
 }
 
@@ -500,6 +509,15 @@ function retestAllPayload(owner, repo, pr, event) {
         const match = nameElement.textContent.match(/❌ (.+?) \(/);
         return match ? match[1] : null;
     }).filter(Boolean);
+
+    // Immediately disable all individual retest buttons
+    jobItems.forEach(item => {
+        const retestBtn = item.querySelector('button.btn:not(.btn-secondary)');
+        if (retestBtn && !retestBtn.disabled) {
+            retestBtn.textContent = '⏳ Retesting...';
+            retestBtn.disabled = true;
+        }
+    });
 
     retestJob(owner, repo, pr, jobs, 'payload');
 }
