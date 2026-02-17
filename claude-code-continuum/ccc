@@ -76,9 +76,10 @@ build_docker_cmd() {
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
 
-    # Note: Container runs as UID 1000 (claude user) by default
-    # If host user is also UID 1000, file permissions will work naturally
-    # For non-1000 users, they may need to adjust file permissions or use :U on mounts
+    # For podman: run as current user to avoid UID mapping issues
+    if [[ "$runtime" == "podman" ]]; then
+        docker_args+=(--user "$(id -u):$(id -g)")
+    fi
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
