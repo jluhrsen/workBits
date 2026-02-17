@@ -82,3 +82,34 @@ def test_sync_continuum_returns_false_on_failure(tmp_path):
             manager = SessionManager()
             result = manager.sync_continuum()
             assert result is False
+
+def test_session_picker_no_sessions_user_says_yes(tmp_path):
+    """Test session picker when no sessions exist and user chooses to start new session"""
+    with patch.dict(os.environ, {'CONTINUUM_REPO_URL': '', 'HOME': str(tmp_path)}):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            mock_repo.return_value.list_sessions.return_value = []
+            with patch('builtins.input', return_value='y'):
+                manager = SessionManager()
+                result = manager.session_picker()
+                assert result is True
+
+def test_session_picker_no_sessions_user_says_no(tmp_path):
+    """Test session picker when no sessions exist and user chooses to exit"""
+    with patch.dict(os.environ, {'CONTINUUM_REPO_URL': '', 'HOME': str(tmp_path)}):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            mock_repo.return_value.list_sessions.return_value = []
+            with patch('builtins.input', return_value='n'):
+                manager = SessionManager()
+                result = manager.session_picker()
+                assert result is False
+
+def test_session_picker_no_sessions_retry_on_invalid_input(tmp_path):
+    """Test session picker retries when user enters invalid input"""
+    with patch.dict(os.environ, {'CONTINUUM_REPO_URL': '', 'HOME': str(tmp_path)}):
+        with patch('session_manager.ContinuumRepo') as mock_repo:
+            mock_repo.return_value.list_sessions.return_value = []
+            # Simulate user entering invalid input first, then 'y'
+            with patch('builtins.input', side_effect=['invalid', 'maybe', 'y']):
+                manager = SessionManager()
+                result = manager.session_picker()
+                assert result is True

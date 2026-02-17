@@ -80,6 +80,39 @@ class SessionManager:
         repo = ContinuumRepo(str(self.continuum_path))
         return repo.list_sessions()
 
+    def session_picker(self) -> bool:
+        """
+        Interactive session picker UI
+
+        Returns:
+            True if should launch Claude Code (new or existing session)
+            False if user wants to exit
+        """
+        sessions = self.list_sessions()
+
+        if not sessions:
+            # No sessions available - handle corner case
+            print("📭 No sessions found")
+            print()
+
+            while True:
+                response = input("Start new session? (y/n): ").strip().lower()
+                if response == 'y':
+                    print()
+                    print("🚀 Starting new Claude Code session...")
+                    print()
+                    return True
+                elif response == 'n':
+                    print()
+                    print("👋 Exiting")
+                    return False
+                else:
+                    print("Please enter 'y' or 'n'")
+
+        # TODO: Handle case where sessions exist
+        # For now, this is unreachable
+        return True
+
     def run(self):
         """Main entrypoint - show banner, sync, and start Claude"""
         workspace = os.getcwd()
@@ -93,9 +126,15 @@ class SessionManager:
             self.sync_continuum()
             print()
 
-        # For now, just launch Claude directly
-        # TODO: Add session picker and restore logic
-        os.execvp('claude', ['claude'] + sys.argv[1:])
+        # Show session picker
+        should_launch = self.session_picker()
+
+        if should_launch:
+            # Launch Claude Code
+            os.execvp('claude', ['claude'] + sys.argv[1:])
+        else:
+            # User chose to exit
+            sys.exit(0)
 
 def main():
     manager = SessionManager()
