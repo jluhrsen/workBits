@@ -1,63 +1,58 @@
 # Flake Buster - How To Guide
 
-👻🚫 **Flake Buster** is your dashboard for quickly knowing e2e/payload failures in your PRs.
+👻🚫 **Flake Buster** helps you quickly see and retest e2e/payload job failures in your PRs.
 
-## Quick Start (Recommended)
+## Quick Start
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jluhrsen/workBits/main/pr-ci-dashboard/run.sh | sh
 ```
 
-Then open **http://localhost:5000** in your browser.
-
-**Want to see the script first?** View it at: [run.sh](https://github.com/jluhrsen/workBits/blob/main/pr-ci-dashboard/run.sh)
+Open **http://localhost:5000**
 
 Press Ctrl+C to stop and clean up.
 
-### With Custom Search Filters (add github search syntax after `sh`)
+### With Custom Search
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jluhrsen/workBits/main/pr-ci-dashboard/run.sh | sh -s -- author:jluhrsen
+curl -fsSL https://raw.githubusercontent.com/jluhrsen/workBits/main/pr-ci-dashboard/run.sh | sh -s -- author:jluhrsen repo:openshift/ovn-kubernetes
 ```
 
 ## Prerequisites
 
-- **Python 3.8+** and **GitHub CLI (`gh`)** authenticated
+- **Python 3.8+**
+- **GitHub CLI** authenticated:
   ```bash
-  gh auth login  # If not already authenticated
-  gh auth status # Verify
+  gh auth login
+  gh auth status
   ```
 
 ## Manual Installation
-
-If you prefer not to use the quick start script:
 
 ```bash
 git clone https://github.com/jluhrsen/workBits.git
 cd workBits/pr-ci-dashboard
 pip install -r requirements.txt
-python server.py
+python server.py [search-args...]
 ```
 
-Then open **http://localhost:5000**
-
-### Custom Search Examples
-
-Pass GitHub search syntax as arguments:
+### Search Examples
 
 ```bash
 python server.py author:jluhrsen
 python server.py repo:openshift/ovn-kubernetes
-python server.py author:jluhrsen repo:openshift/ovn-kubernetes label:bug
+python server.py author:jluhrsen label:bug is:draft
 ```
 
-Default search: `is:pr is:open archived:false author:openshift-pr-manager[bot]`
+Default: `is:pr is:open archived:false author:openshift-pr-manager[bot]`
 
 ## Using the Dashboard
 
-- **Search box**: Enter GitHub search syntax, press Enter
-- **PR cards**: Show E2E jobs (left) and Payload jobs (right) with failure counts
-- **Retest buttons**: Click to retest individual jobs or all jobs in a section
-- **PR links**: Click the red PR number to open on GitHub
+- **Search bar**: Enter GitHub search syntax, press Enter
+- **PR cards**: E2E jobs (left), Payload jobs (right)
+- **Expand sections**: Click job headers to show/hide failed jobs
+- **Retest**: Click button to trigger `/test` or `/payload-job` comment
+  - Button shows "⏳ Retesting..." and polls until job starts running
+- **PR links**: Click red PR number to open on GitHub
 
-Retest buttons show "⏳ Retesting..." and poll until the job starts running.
+That's it! 🎉
