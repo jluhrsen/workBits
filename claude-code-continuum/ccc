@@ -76,11 +76,8 @@ build_docker_cmd() {
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
 
-    # For podman: use --userns=keep-id to map host UID into container
-    # This allows reading mounted files without changing host filesystem ownership
-    if [[ "$runtime" == "podman" ]]; then
-        docker_args+=(--userns=keep-id)
-    fi
+    # Container runs as UID 1000 (claude user) by default
+    # If host user is also UID 1000, file ownership matches naturally
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
