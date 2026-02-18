@@ -1,19 +1,41 @@
-// Global state
+// ========================================
+// Global State
+// ========================================
 let currentPRs = [];
 let currentPage = 1;
 let totalResults = 0;
 
-// Track retested jobs: Map<"owner/repo/pr/jobName", {timestamp, pollInterval}>
+// Track retested jobs: Map<"owner/repo/pr/jobName", {startTime, pollInterval}>
 const retestedJobs = new Map();
 const POLL_INTERVAL = 5000; // 5 seconds
 const MAX_POLL_TIME = 5 * 60 * 1000; // 5 minutes
 
-// Initialize on page load
+// DOM element cache
+const DOM = {
+    searchInput: null,
+    searchBtn: null,
+    refreshBtn: null,
+    authBanner: null,
+    prContainer: null,
+    toastContainer: null
+};
+
+// ========================================
+// Initialization
+// ========================================
 document.addEventListener('DOMContentLoaded', async () => {
     await init();
 });
 
 async function init() {
+    // Cache DOM elements
+    DOM.searchInput = document.getElementById('search-input');
+    DOM.searchBtn = document.getElementById('search-btn');
+    DOM.refreshBtn = document.getElementById('refresh-btn');
+    DOM.authBanner = document.getElementById('auth-banner');
+    DOM.prContainer = document.getElementById('pr-cards-container');
+    DOM.toastContainer = document.getElementById('toast-container');
+
     // Check auth status
     const authStatus = await checkAuth();
     if (!authStatus.authenticated) {
@@ -22,29 +44,20 @@ async function init() {
 
     // Load default query
     const defaultQuery = await fetch('/api/default-query').then(r => r.json());
-    document.getElementById('search-input').value = defaultQuery.query;
+    DOM.searchInput.value = defaultQuery.query;
 
     // Auto-execute search
     await executeSearch(defaultQuery.query);
 
     // Set up event listeners
-    document.getElementById('search-btn').addEventListener('click', () => {
-        const query = document.getElementById('search-input').value;
-        executeSearch(query);
+    DOM.searchBtn.addEventListener('click', () => executeSearch(DOM.searchInput.value));
+    DOM.searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') executeSearch(DOM.searchInput.value);
     });
-
-    document.getElementById('search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const query = document.getElementById('search-input').value;
-            executeSearch(query);
-        }
-    });
-
-    document.getElementById('refresh-btn').addEventListener('click', () => {
-        const query = document.getElementById('search-input').value;
+    DOM.refreshBtn.addEventListener('click', () => {
         currentPage = 1;
-        document.getElementById('pr-cards-container').innerHTML = '';
-        executeSearch(query);
+        DOM.prContainer.innerHTML = '';
+        executeSearch(DOM.searchInput.value);
     });
 }
 
@@ -58,12 +71,40 @@ async function checkAuth() {
     }
 }
 
-function showAuthBanner(message) {
-    const banner = document.getElementById('auth-banner');
-    banner.textContent = '⚠️ ' + message;
-    banner.classList.remove('hidden');
+// ========================================
+// Utility Helpers
+// ========================================
+function createElement(tag, className, textContent, attributes = {}) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (textContent) el.textContent = textContent;
+    Object.entries(attributes).forEach(([key, value]) => el[key] = value);
+    return el;
 }
 
+function extractJobNames(section) {
+    return Array.from(section.querySelectorAll('.job-item'))
+        .map(item => item.querySelector('.job-name').textContent.match(/❌ (.+?) \(/)?.[1])
+        .filter(Boolean);
+}
+
+function getAge(createdAt) {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return '1 day old';
+    return `${diffDays} days old`;
+}
+
+function isJobRetesting(owner, repo, number, jobName) {
+    const jobKey = `${owner}/${repo}/${number}/${jobName}`;
+    return retestedJobs.has(jobKey);
+}
+
+// ========================================
+// Search & PR Rendering
+// ========================================
 async function executeSearch(query) {
     showLoading('Searching PRs...');
 
@@ -95,41 +136,33 @@ async function executeSearch(query) {
 }
 
 function renderPRCards(prs) {
-    const container = document.getElementById('pr-cards-container');
-
     if (prs.length === 0) {
-        container.innerHTML = '<div class="loading">No PRs found</div>';
+        DOM.prContainer.innerHTML = '<div class="loading">No PRs found</div>';
         return;
     }
 
     prs.forEach(pr => {
         const card = createPRCard(pr);
-        container.appendChild(card);
-
-        // Fetch job data in background
+        DOM.prContainer.appendChild(card);
         loadPRJobs(pr.owner, pr.repo, pr.number, card);
     });
 }
 
+// ========================================
+// DOM Helpers - PR Card Creation
+// ========================================
 function createPRCard(pr) {
-    const card = document.createElement('div');
-    card.className = 'pr-card';
+    const card = createElement('div', 'pr-card');
     card.id = `pr-${pr.owner}-${pr.repo}-${pr.number}`;
 
-    const age = getAge(pr.created_at);
+    // PR Header
+    const prHeader = createElement('div', 'pr-header');
+    const prTitle = createElement('div', 'pr-title');
 
-    // Create PR header with safe text content
-    const prHeader = document.createElement('div');
-    prHeader.className = 'pr-header';
-
-    const prTitle = document.createElement('div');
-    prTitle.className = 'pr-title';
-
-    // Create PR number link
-    const prLink = document.createElement('a');
-    prLink.href = `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`;
-    prLink.target = '_blank';
-    prLink.textContent = `#${pr.number}`;
+    const prLink = createElement('a', '', `#${pr.number}`, {
+        href: `https://github.com/${pr.owner}/${pr.repo}/pull/${pr.number}`,
+        target: '_blank'
+    });
     prLink.style.color = 'var(--primary)';
     prLink.style.textDecoration = 'none';
     prLink.style.fontWeight = 'bold';
@@ -137,61 +170,42 @@ function createPRCard(pr) {
     prTitle.appendChild(prLink);
     prTitle.appendChild(document.createTextNode(` - ${pr.title}`));
 
-    const prMeta = document.createElement('div');
-    prMeta.className = 'pr-meta';
-    prMeta.textContent = `${pr.owner}/${pr.repo} • ${pr.author} • ${age}`;
+    const prMeta = createElement('div', 'pr-meta', `${pr.owner}/${pr.repo} • ${pr.author} • ${getAge(pr.created_at)}`);
 
     prHeader.appendChild(prTitle);
     prHeader.appendChild(prMeta);
 
-    // Create E2E section
-    const e2eSection = document.createElement('div');
-    e2eSection.className = 'job-section';
-    e2eSection.id = `e2e-${pr.owner}-${pr.repo}-${pr.number}`;
+    // Job sections container
+    const jobSectionsContainer = createElement('div', 'job-sections-container');
+    jobSectionsContainer.appendChild(createJobSectionPlaceholder('e2e', pr.owner, pr.repo, pr.number));
+    jobSectionsContainer.appendChild(createJobSectionPlaceholder('payload', pr.owner, pr.repo, pr.number));
 
-    const e2eHeader = document.createElement('div');
-    e2eHeader.className = 'job-section-header';
-    e2eHeader.textContent = '▶ E2E Jobs (loading...)';
-
-    const e2eList = document.createElement('div');
-    e2eList.className = 'job-list';
-
-    e2eSection.appendChild(e2eHeader);
-    e2eSection.appendChild(e2eList);
-
-    // Create Payload section
-    const payloadSection = document.createElement('div');
-    payloadSection.className = 'job-section';
-    payloadSection.id = `payload-${pr.owner}-${pr.repo}-${pr.number}`;
-
-    const payloadHeader = document.createElement('div');
-    payloadHeader.className = 'job-section-header';
-    payloadHeader.textContent = '▶ Payload Jobs (loading...)';
-
-    const payloadList = document.createElement('div');
-    payloadList.className = 'job-list';
-
-    payloadSection.appendChild(payloadHeader);
-    payloadSection.appendChild(payloadList);
-
-    // Create job sections container (for side-by-side layout)
-    const jobSectionsContainer = document.createElement('div');
-    jobSectionsContainer.className = 'job-sections-container';
-    jobSectionsContainer.appendChild(e2eSection);
-    jobSectionsContainer.appendChild(payloadSection);
-
-    // Assemble card
     card.appendChild(prHeader);
     card.appendChild(jobSectionsContainer);
 
     return card;
 }
 
+function createJobSectionPlaceholder(type, owner, repo, number) {
+    const section = createElement('div', 'job-section');
+    section.id = `${type}-${owner}-${repo}-${number}`;
+
+    const header = createElement('div', 'job-section-header', `▶ ${type.toUpperCase()} Jobs (loading...)`);
+    const list = createElement('div', 'job-list');
+
+    section.appendChild(header);
+    section.appendChild(list);
+
+    return section;
+}
+
+// ========================================
+// Job Loading & Rendering
+// ========================================
 async function loadPRJobs(owner, repo, number, cardElement) {
     try {
         const response = await fetch(`/api/pr/${owner}/${repo}/${number}`);
         const data = await response.json();
-
         updateCardWithJobs(cardElement, data, owner, repo, number);
     } catch (error) {
         showCardError(cardElement, error.message);
@@ -199,221 +213,115 @@ async function loadPRJobs(owner, repo, number, cardElement) {
 }
 
 function updateCardWithJobs(cardElement, data, owner, repo, number) {
-    // Update E2E section
-    const e2eSection = cardElement.querySelector(`#e2e-${owner}-${repo}-${number}`);
-    const e2eHeader = e2eSection.querySelector('.job-section-header');
-    const e2eList = e2eSection.querySelector('.job-list');
+    renderJobSection(cardElement, `e2e-${owner}-${repo}-${number}`, data.e2e, owner, repo, number, 'E2E', 'e2e');
+    renderJobSection(cardElement, `payload-${owner}-${repo}-${number}`, data.payload, owner, repo, number, 'Payload', 'payload');
+}
 
-    let e2eFailed = data.e2e.failed || [];
-    const e2eRunning = data.e2e.running || [];
+function renderJobSection(cardElement, sectionId, jobData, owner, repo, number, displayType, jobType) {
+    const section = cardElement.querySelector(`#${sectionId}`);
+    const header = section.querySelector('.job-section-header');
+    const list = section.querySelector('.job-list');
 
-    // Filter out retested jobs that are now running
-    e2eFailed = e2eFailed.filter(job => {
+    // Filter jobs (remove ones that are now running after retest)
+    let failed = (jobData.failed || []).filter(job => {
         const jobKey = `${owner}/${repo}/${number}/${job.name}`;
         const retestInfo = retestedJobs.get(jobKey);
         if (retestInfo) {
-            // Check if job is now running
-            const isRunning = e2eRunning.some(r => r.name === job.name);
+            const isRunning = (jobData.running || []).some(r => r.name === job.name);
             if (isRunning) {
-                // Job started running, stop polling for this job
                 clearInterval(retestInfo.pollInterval);
                 retestedJobs.delete(jobKey);
-                return false; // Remove from failed list
+                return false;
             }
         }
-        return true; // Keep in failed list
+        return true;
     });
 
-    e2eHeader.textContent = `▶ E2E Jobs (${e2eFailed.length} failed | ${e2eRunning.length} running)`;
+    const running = jobData.running || [];
 
-    // Remove old listener and add new one
-    const newE2eHeader = e2eHeader.cloneNode(true);
-    e2eHeader.parentNode.replaceChild(newE2eHeader, e2eHeader);
-    newE2eHeader.addEventListener('click', () => e2eList.classList.toggle('expanded'));
+    // Update header
+    header.textContent = `▶ ${displayType} Jobs (${failed.length} failed | ${running.length} running)`;
 
-    // Clear existing content
-    e2eList.innerHTML = '';
+    // Add toggle listener
+    const newHeader = header.cloneNode(true);
+    header.parentNode.replaceChild(newHeader, header);
+    newHeader.addEventListener('click', () => list.classList.toggle('expanded'));
 
-    if (e2eFailed.length > 0) {
-        let activeRetestCount = 0;
+    // Render jobs
+    list.innerHTML = '';
 
-        e2eFailed.forEach(job => {
-            const jobItem = document.createElement('div');
-            jobItem.className = 'job-item';
-
-            const jobName = document.createElement('div');
-            jobName.className = 'job-name';
-            jobName.textContent = `❌ ${job.name} (${job.consecutive} consecutive)`;
-
-            const jobActions = document.createElement('div');
-            jobActions.className = 'job-actions';
-
-            const retestBtn = document.createElement('button');
-            retestBtn.className = 'btn';
-            retestBtn.dataset.owner = owner;
-            retestBtn.dataset.repo = repo;
-            retestBtn.dataset.number = number;
-            retestBtn.dataset.jobName = job.name;
-            retestBtn.dataset.jobType = 'e2e';
-
-            // Check if job is being polled
-            const jobKey = `${owner}/${repo}/${number}/${job.name}`;
-            if (retestedJobs.has(jobKey)) {
-                retestBtn.textContent = '⏳ Retesting...';
-                retestBtn.disabled = true;
-            } else {
-                retestBtn.textContent = 'Retest';
-                retestBtn.addEventListener('click', (e) => {
-                    // Immediately update button state
-                    e.target.textContent = '⏳ Retesting...';
-                    e.target.disabled = true;
-                    retestJob(owner, repo, number, [job.name], 'e2e');
-                });
-                activeRetestCount++; // Count non-retesting jobs
-            }
-
-            const analyzeBtn = document.createElement('button');
-            analyzeBtn.className = 'btn btn-secondary';
-            analyzeBtn.textContent = 'Analyze';
-            analyzeBtn.disabled = true;
-
-            jobActions.appendChild(retestBtn);
-            jobActions.appendChild(analyzeBtn);
-
-            jobItem.appendChild(jobActions);
-            jobItem.appendChild(jobName);
-
-            e2eList.appendChild(jobItem);
-        });
-
-        const retestAllBtn = document.createElement('button');
-        retestAllBtn.className = 'btn';
-        retestAllBtn.textContent = 'Retest All E2E';
-
-        // Disable if all jobs are already being retested
-        if (activeRetestCount === 0) {
-            retestAllBtn.disabled = true;
-            retestAllBtn.textContent = 'Retest All E2E (all retesting...)';
-        } else {
-            retestAllBtn.addEventListener('click', (e) => retestAllE2E(owner, repo, number, e));
-        }
-
-        e2eList.appendChild(retestAllBtn);
+    if (failed.length > 0) {
+        const activeRetestCount = renderJobItems(list, failed, owner, repo, number, jobType);
+        list.appendChild(createRetestAllButton(owner, repo, number, displayType, jobType, activeRetestCount));
     } else {
-        const noFailures = document.createElement('div');
-        noFailures.style.padding = '0.5rem';
-        noFailures.textContent = '✅ No failed jobs';
-        e2eList.appendChild(noFailures);
-    }
-
-    // Update Payload section
-    const payloadSection = cardElement.querySelector(`#payload-${owner}-${repo}-${number}`);
-    const payloadHeader = payloadSection.querySelector('.job-section-header');
-    const payloadList = payloadSection.querySelector('.job-list');
-
-    let payloadFailed = data.payload.failed || [];
-    const payloadRunning = data.payload.running || [];
-
-    // Filter out retested jobs that are now running
-    payloadFailed = payloadFailed.filter(job => {
-        const jobKey = `${owner}/${repo}/${number}/${job.name}`;
-        const retestInfo = retestedJobs.get(jobKey);
-        if (retestInfo) {
-            // Check if job is now running
-            const isRunning = payloadRunning.some(r => r.name === job.name);
-            if (isRunning) {
-                // Job started running, stop polling for this job
-                clearInterval(retestInfo.pollInterval);
-                retestedJobs.delete(jobKey);
-                return false; // Remove from failed list
-            }
-        }
-        return true; // Keep in failed list
-    });
-
-    payloadHeader.textContent = `▶ Payload Jobs (${payloadFailed.length} failed | ${payloadRunning.length} running)`;
-
-    // Remove old listener and add new one
-    const newPayloadHeader = payloadHeader.cloneNode(true);
-    payloadHeader.parentNode.replaceChild(newPayloadHeader, payloadHeader);
-    newPayloadHeader.addEventListener('click', () => payloadList.classList.toggle('expanded'));
-
-    // Clear existing content
-    payloadList.innerHTML = '';
-
-    if (payloadFailed.length > 0) {
-        let activeRetestCount = 0;
-
-        payloadFailed.forEach(job => {
-            const jobItem = document.createElement('div');
-            jobItem.className = 'job-item';
-
-            const jobName = document.createElement('div');
-            jobName.className = 'job-name';
-            jobName.textContent = `❌ ${job.name} (${job.consecutive} consecutive)`;
-
-            const jobActions = document.createElement('div');
-            jobActions.className = 'job-actions';
-
-            const retestBtn = document.createElement('button');
-            retestBtn.className = 'btn';
-            retestBtn.dataset.owner = owner;
-            retestBtn.dataset.repo = repo;
-            retestBtn.dataset.number = number;
-            retestBtn.dataset.jobName = job.name;
-            retestBtn.dataset.jobType = 'payload';
-
-            // Check if job is being polled
-            const jobKey = `${owner}/${repo}/${number}/${job.name}`;
-            if (retestedJobs.has(jobKey)) {
-                retestBtn.textContent = '⏳ Retesting...';
-                retestBtn.disabled = true;
-            } else {
-                retestBtn.textContent = 'Retest';
-                retestBtn.addEventListener('click', (e) => {
-                    // Immediately update button state
-                    e.target.textContent = '⏳ Retesting...';
-                    e.target.disabled = true;
-                    retestJob(owner, repo, number, [job.name], 'payload');
-                });
-                activeRetestCount++; // Count non-retesting jobs
-            }
-
-            const analyzeBtn = document.createElement('button');
-            analyzeBtn.className = 'btn btn-secondary';
-            analyzeBtn.textContent = 'Analyze';
-            analyzeBtn.disabled = true;
-
-            jobActions.appendChild(retestBtn);
-            jobActions.appendChild(analyzeBtn);
-
-            jobItem.appendChild(jobActions);
-            jobItem.appendChild(jobName);
-
-            payloadList.appendChild(jobItem);
-        });
-
-        const retestAllBtn = document.createElement('button');
-        retestAllBtn.className = 'btn';
-        retestAllBtn.textContent = 'Retest All Payload';
-
-        // Disable if all jobs are already being retested
-        if (activeRetestCount === 0) {
-            retestAllBtn.disabled = true;
-            retestAllBtn.textContent = 'Retest All Payload (all retesting...)';
-        } else {
-            retestAllBtn.addEventListener('click', (e) => retestAllPayload(owner, repo, number, e));
-        }
-
-        payloadList.appendChild(retestAllBtn);
-    } else {
-        const noFailures = document.createElement('div');
-        noFailures.style.padding = '0.5rem';
-        noFailures.textContent = '✅ No failed jobs';
-        payloadList.appendChild(noFailures);
+        list.appendChild(createElement('div', '', '✅ No failed jobs', { style: 'padding: 0.5rem;' }));
     }
 }
 
+function renderJobItems(list, failedJobs, owner, repo, number, jobType) {
+    let activeRetestCount = 0;
+
+    failedJobs.forEach(job => {
+        const jobItem = createElement('div', 'job-item');
+        const jobName = createElement('div', 'job-name', `❌ ${job.name} (${job.consecutive} consecutive)`);
+        const jobActions = createElement('div', 'job-actions');
+
+        const retestBtn = createRetestButton(job, owner, repo, number, jobType);
+        const analyzeBtn = createAnalyzeButton();
+
+        if (!retestBtn.disabled) activeRetestCount++;
+
+        jobActions.appendChild(retestBtn);
+        jobActions.appendChild(analyzeBtn);
+        jobItem.appendChild(jobActions);
+        jobItem.appendChild(jobName);
+        list.appendChild(jobItem);
+    });
+
+    return activeRetestCount;
+}
+
+function createRetestButton(job, owner, repo, number, jobType) {
+    const btn = createElement('button', 'btn');
+
+    if (isJobRetesting(owner, repo, number, job.name)) {
+        btn.textContent = '⏳ Retesting...';
+        btn.disabled = true;
+    } else {
+        btn.textContent = 'Retest';
+        btn.addEventListener('click', (e) => {
+            e.target.textContent = '⏳ Retesting...';
+            e.target.disabled = true;
+            retestJob(owner, repo, number, [job.name], jobType);
+        });
+    }
+
+    return btn;
+}
+
+function createAnalyzeButton() {
+    const btn = createElement('button', 'btn btn-secondary', 'Analyze');
+    btn.disabled = true;
+    return btn;
+}
+
+function createRetestAllButton(owner, repo, number, displayType, jobType, activeRetestCount) {
+    const btn = createElement('button', 'btn');
+
+    if (activeRetestCount === 0) {
+        btn.textContent = `Retest All ${displayType} (all retesting...)`;
+        btn.disabled = true;
+    } else {
+        btn.textContent = `Retest All ${displayType}`;
+        btn.addEventListener('click', (e) => retestAllJobs(owner, repo, number, jobType, e));
+    }
+
+    return btn;
+}
+
+// ========================================
+// Retest Logic
+// ========================================
 async function retestJob(owner, repo, pr, jobs, type) {
     try {
         const response = await fetch('/api/retest', {
@@ -429,32 +337,7 @@ async function retestJob(owner, repo, pr, jobs, type) {
             disableAllRetestButtons();
         } else if (result.success) {
             showToast(`✅ Retest triggered for ${jobs.length} job(s)`, 'success');
-
-            // Track retested jobs and start polling
-            jobs.forEach(jobName => {
-                const jobKey = `${owner}/${repo}/${pr}/${jobName}`;
-                const startTime = Date.now();
-
-                // Start polling for this PR
-                const pollInterval = setInterval(() => {
-                    const elapsed = Date.now() - startTime;
-
-                    // Stop polling after MAX_POLL_TIME
-                    if (elapsed > MAX_POLL_TIME) {
-                        clearInterval(pollInterval);
-                        retestedJobs.delete(jobKey);
-                        return;
-                    }
-
-                    // Reload job data for this PR
-                    const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
-                    if (card) {
-                        loadPRJobs(owner, repo, pr, card);
-                    }
-                }, POLL_INTERVAL);
-
-                retestedJobs.set(jobKey, { startTime, pollInterval });
-            });
+            trackRetestedJobs(owner, repo, pr, jobs);
         } else {
             showToast(`❌ Error: ${result.error}`, 'error');
         }
@@ -464,90 +347,49 @@ async function retestJob(owner, repo, pr, jobs, type) {
     }
 }
 
-function retestAllE2E(owner, repo, pr, event) {
-    // Immediately disable the button
-    if (event && event.target) {
+function retestAllJobs(owner, repo, pr, type, event) {
+    if (event?.target) {
         event.target.disabled = true;
         event.target.textContent = '⏳ Retesting all...';
     }
 
     const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
-    const e2eSection = card.querySelector(`#e2e-${owner}-${repo}-${pr}`);
-    const jobItems = e2eSection.querySelectorAll('.job-item');
+    const section = card.querySelector(`#${type}-${owner}-${repo}-${pr}`);
+    const jobs = extractJobNames(section);
 
-    const jobs = Array.from(jobItems).map(item => {
-        const nameElement = item.querySelector('.job-name');
-        const match = nameElement.textContent.match(/❌ (.+?) \(/);
-        return match ? match[1] : null;
-    }).filter(Boolean);
-
-    // Immediately disable all individual retest buttons
-    jobItems.forEach(item => {
-        const retestBtn = item.querySelector('button.btn:not(.btn-secondary)');
-        if (retestBtn && !retestBtn.disabled) {
-            retestBtn.textContent = '⏳ Retesting...';
-            retestBtn.disabled = true;
+    // Disable all individual retest buttons
+    section.querySelectorAll('.job-item button.btn:not(.btn-secondary)').forEach(btn => {
+        if (!btn.disabled) {
+            btn.textContent = '⏳ Retesting...';
+            btn.disabled = true;
         }
     });
 
-    retestJob(owner, repo, pr, jobs, 'e2e');
+    retestJob(owner, repo, pr, jobs, type);
 }
 
-function retestAllPayload(owner, repo, pr, event) {
-    // Immediately disable the button
-    if (event && event.target) {
-        event.target.disabled = true;
-        event.target.textContent = '⏳ Retesting all...';
-    }
+function trackRetestedJobs(owner, repo, pr, jobs) {
+    jobs.forEach(jobName => {
+        const jobKey = `${owner}/${repo}/${pr}/${jobName}`;
+        const startTime = Date.now();
 
-    const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
-    const payloadSection = card.querySelector(`#payload-${owner}-${repo}-${pr}`);
-    const jobItems = payloadSection.querySelectorAll('.job-item');
+        const pollInterval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
 
-    const jobs = Array.from(jobItems).map(item => {
-        const nameElement = item.querySelector('.job-name');
-        const match = nameElement.textContent.match(/❌ (.+?) \(/);
-        return match ? match[1] : null;
-    }).filter(Boolean);
+            if (elapsed > MAX_POLL_TIME) {
+                clearInterval(pollInterval);
+                retestedJobs.delete(jobKey);
+                return;
+            }
 
-    // Immediately disable all individual retest buttons
-    jobItems.forEach(item => {
-        const retestBtn = item.querySelector('button.btn:not(.btn-secondary)');
-        if (retestBtn && !retestBtn.disabled) {
-            retestBtn.textContent = '⏳ Retesting...';
-            retestBtn.disabled = true;
-        }
+            const card = document.getElementById(`pr-${owner}-${repo}-${pr}`);
+            if (card) {
+                loadPRJobs(owner, repo, pr, card);
+            }
+        }, POLL_INTERVAL);
+
+        retestedJobs.set(jobKey, { startTime, pollInterval });
     });
-
-    retestJob(owner, repo, pr, jobs, 'payload');
-}
-
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 5000);
-}
-
-function showLoading(message) {
-    const container = document.getElementById('pr-cards-container');
-    container.innerHTML = `<div class="loading">${message}</div>`;
-}
-
-function hideLoading() {
-    const loading = document.querySelector('.loading');
-    if (loading && loading.textContent.includes('Searching')) {
-        loading.remove();
-    }
-}
-
-function showCardError(cardElement, message) {
-    cardElement.innerHTML += `<div style="color: var(--primary); padding: 1rem;">⚠️ Error: ${message}</div>`;
 }
 
 function disableAllRetestButtons() {
@@ -558,13 +400,32 @@ function disableAllRetestButtons() {
     });
 }
 
-function getAge(createdAt) {
-    const created = new Date(createdAt);
-    const now = new Date();
-    const diffMs = now - created;
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+// ========================================
+// UI Feedback
+// ========================================
+function showToast(message, type = 'success') {
+    const toast = createElement('div', `toast ${type}`, message);
+    DOM.toastContainer.appendChild(toast);
 
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return '1 day old';
-    return `${diffDays} days old`;
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function showLoading(message) {
+    DOM.prContainer.innerHTML = `<div class="loading">${message}</div>`;
+}
+
+function hideLoading() {
+    const loading = DOM.prContainer.querySelector('.loading');
+    if (loading?.textContent.includes('Searching')) {
+        loading.remove();
+    }
+}
+
+function showAuthBanner(message) {
+    DOM.authBanner.textContent = '⚠️ ' + message;
+    DOM.authBanner.classList.remove('hidden');
+}
+
+function showCardError(cardElement, message) {
+    cardElement.innerHTML += `<div style="color: var(--primary); padding: 1rem;">⚠️ Error: ${message}</div>`;
 }

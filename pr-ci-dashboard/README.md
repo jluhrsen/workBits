@@ -1,132 +1,90 @@
-# PR CI Dashboard
+# Flake Buster - PR CI Dashboard
 
-Dashboard to see PR job failures and retest them.
+Dashboard for viewing and retesting failed OpenShift PR CI jobs.
+
+## Quick Start
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jluhrsen/workBits/main/pr-ci-dashboard/run.sh | sh
+```
+
+Then open **http://localhost:5000**
 
 ## Features
 
 - Search PRs using GitHub query syntax
-- View failed e2e and payload jobs with consecutive failure counts
+- View failed e2e/payload jobs with consecutive failure counts
 - One-click retest via local `gh` CLI
-- Progressive loading for fast UX
-- Grayed-out "Analyze" button (future enhancement)
+- Auto-polling after retest to detect when jobs start running
 
 ## Prerequisites
 
-1. **Python 3.8+**
-2. **GitHub CLI** - Install from https://cli.github.com
-3. **GitHub CLI authenticated** - Run: `gh auth login`
+- **Python 3.8+**
+- **GitHub CLI** (`gh`) authenticated - https://cli.github.com
+  ```bash
+  gh auth login
+  ```
 
-## Installation
+## Manual Installation
 
 ```bash
-# Clone repository and navigate to it
-git clone <repository-url>
-cd pr-ci-dashboard
-
-# Install dependencies
+git clone https://github.com/jluhrsen/workBits.git
+cd workBits/pr-ci-dashboard
 pip install -r requirements.txt
+python server.py
 ```
 
-## Usage
+### Custom Search
 
-Start the dashboard with optional search parameters:
+Pass GitHub search syntax as arguments:
 
 ```bash
-# Basic usage (default search)
-python server.py
-
-# Add custom search parameters
-python server.py --author:jluhrsen --repo:openshift/ovn-kubernetes
-
-# Multiple parameters
-python server.py --author:jluhrsen --label:bug is:draft
+python server.py author:jluhrsen
+python server.py repo:openshift/ovn-kubernetes
+python server.py author:jluhrsen label:bug is:draft
 ```
 
-Then visit: **http://localhost:5000**
-
-### Default Search
-
-The dashboard defaults to:
-```
-is:pr is:open archived:false author:openshift-pr-manager[bot]
-```
-
-CLI arguments are appended to this base query.
-
-## How It Works
-
-1. **Server starts** → Fetches bash scripts from GitHub PR #177
-2. **User searches** → GitHub CLI finds matching PRs
-3. **For each PR** → Executes e2e-retest.sh and payload-retest.sh
-4. **Parses output** → Extracts failed/running jobs
-5. **User clicks Retest** → Posts `/test` or `/payload-job` comment via `gh`
+Default: `is:pr is:open archived:false author:openshift-pr-manager[bot]`
 
 ## Architecture
 
-- **Backend**: Flask server with subprocess execution
-- **Frontend**: Vanilla HTML/CSS/JavaScript (Red Hat theme)
+- **Backend**: Flask server running bash scripts via subprocess
+- **Frontend**: Vanilla JS with Red Hat theme
 - **Scripts**: Fetched from https://github.com/openshift-eng/ai-helpers/pull/177
-- **Auth**: Local `gh` CLI (no OAuth needed)
+- **Auth**: Uses local `gh` CLI credentials
 
 ## Project Structure
 
 ```
 pr-ci-dashboard/
-├── server.py                 # Flask app entry point
-├── api/
-│   ├── search.py            # PR search via gh
-│   ├── jobs.py              # Job status fetching
-│   └── retest.py            # Post retest comments
-├── parsers/
-│   ├── e2e_parser.py        # Parse e2e-retest.sh output
-│   └── payload_parser.py    # Parse payload-retest.sh output
-├── utils/
-│   ├── script_fetcher.py    # Fetch scripts from GitHub
-│   ├── job_executor.py      # Execute bash scripts
-│   └── gh_auth.py           # Check gh CLI auth
-├── static/
-│   └── app.js               # Frontend JavaScript
-├── templates/
-│   └── index.html           # Dashboard HTML
-└── docs/
-    └── design.md            # Design document
+├── server.py           # Flask entry point
+├── api/                # API endpoints (search, jobs, retest)
+├── parsers/            # Parse script output
+├── utils/              # Script fetcher, executor, auth check
+├── static/             # app.js, styles.css
+└── templates/          # index.html
 ```
-
-## Configuration
-
-### Environment Variables
-
-- `AI_HELPERS_BRANCH`: GitHub branch/ref to fetch scripts from (default: refs/pull/177/head)
-  - Development (current): refs/pull/177/head
-  - Production (after merge): main
 
 ## Troubleshooting
 
-**"GitHub CLI not authenticated"**
+**GitHub CLI not authenticated**
 ```bash
 gh auth login
+gh auth status
 ```
 
-**"Failed to fetch scripts"**
-- Check internet connection
-- Verify GitHub is accessible
-- Check PR #177 still exists
-
 **Scripts timeout**
-- Increase timeout in `utils/job_executor.py` (default 30s)
-- PRs with many jobs may take longer
+Increase timeout in `utils/job_executor.py` (default 30s)
 
-**Retest button disabled**
-- Check `gh auth status` in terminal
-- Re-authenticate if needed
+**Failed to fetch scripts**
+Check internet connection and verify PR #177 exists
 
-## Future Enhancements
+## Configuration
 
-- "Analyze" button - AI-powered failure pattern detection
-- Auto-refresh toggle
-- URL state persistence
-- Deployment to Red Hat internal platform
+**Environment Variables:**
+- `AI_HELPERS_BRANCH`: GitHub branch to fetch scripts from (default: `refs/pull/177/head`)
 
 ## Documentation
 
-See [docs/design.md](docs/design.md) for the complete design document.
+- [HOWTO.md](HOWTO.md) - User guide
+- [docs/design.md](docs/design.md) - Complete design document
