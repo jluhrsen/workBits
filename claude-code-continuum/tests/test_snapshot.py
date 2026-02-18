@@ -19,23 +19,22 @@ def test_create_snapshot_generates_session_id(tmp_path):
     repo = ContinuumRepo(str(continuum_path))
     repo.init()
 
-    with patch('subprocess.run') as mock_run:
-        # Mock hostname and uname
-        mock_run.side_effect = [
-            MagicMock(stdout='test-host', returncode=0),  # hostname
-            MagicMock(stdout='5.15.0-test', returncode=0),  # uname -r
-            MagicMock(returncode=1),  # git rev-parse (not a repo)
-        ]
+    with patch.dict(os.environ, {'CCC_HOST_HOSTNAME': 'test-host', 'CCC_HOST_KERNEL': '5.15.0-test'}):
+        with patch('subprocess.run') as mock_run:
+            # Mock git commands
+            mock_run.side_effect = [
+                MagicMock(returncode=1),  # git rev-parse (not a repo)
+            ]
 
-        with patch('shutil.copy'):  # Mock conversation copy
-            metadata = repo.create_snapshot(workspace, "Test session")
+            with patch('shutil.copy'):  # Mock conversation copy
+                metadata = repo.create_snapshot(workspace, "Test session")
 
     assert 'session_id' in metadata
     assert metadata['session_id'].startswith('session-')
     assert len(metadata['session_id'].split('-')) == 4  # session-YYYYMMDD-HHMMSS-uuid
 
 def test_snapshot_captures_host_details(tmp_path):
-    """Test that snapshot captures hostname and kernel version"""
+    """Test that snapshot captures hostname and kernel version from env vars"""
     workspace = tmp_path / 'workspace'
     workspace.mkdir()
 
@@ -43,15 +42,14 @@ def test_snapshot_captures_host_details(tmp_path):
     repo = ContinuumRepo(str(continuum_path))
     repo.init()
 
-    with patch('subprocess.run') as mock_run:
-        mock_run.side_effect = [
-            MagicMock(stdout='my-laptop', returncode=0),  # hostname
-            MagicMock(stdout='6.1.0-17-amd64', returncode=0),  # uname -r
-            MagicMock(returncode=1),  # git rev-parse
-        ]
+    with patch.dict(os.environ, {'CCC_HOST_HOSTNAME': 'my-laptop', 'CCC_HOST_KERNEL': '6.1.0-17-amd64'}):
+        with patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                MagicMock(returncode=1),  # git rev-parse
+            ]
 
-        with patch('shutil.copy'):
-            metadata = repo.create_snapshot(workspace, "Test")
+            with patch('shutil.copy'):
+                metadata = repo.create_snapshot(workspace, "Test")
 
     assert metadata['hostname'] == 'my-laptop'
     assert metadata['kernel_version'] == '6.1.0-17-amd64'
@@ -65,15 +63,14 @@ def test_snapshot_saves_metadata_file(tmp_path):
     repo = ContinuumRepo(str(continuum_path))
     repo.init()
 
-    with patch('subprocess.run') as mock_run:
-        mock_run.side_effect = [
-            MagicMock(stdout='test-host', returncode=0),
-            MagicMock(stdout='5.15.0-test', returncode=0),
-            MagicMock(returncode=1),  # not a git repo
-        ]
+    with patch.dict(os.environ, {'CCC_HOST_HOSTNAME': 'test-host', 'CCC_HOST_KERNEL': '5.15.0-test'}):
+        with patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                MagicMock(returncode=1),  # not a git repo
+            ]
 
-        with patch('shutil.copy'):
-            metadata = repo.create_snapshot(workspace, "Test session")
+            with patch('shutil.copy'):
+                metadata = repo.create_snapshot(workspace, "Test session")
 
     session_id = metadata['session_id']
     metadata_file = continuum_path / 'sessions' / session_id / 'metadata.json'
@@ -96,18 +93,17 @@ def test_snapshot_captures_git_branch(tmp_path):
     repo = ContinuumRepo(str(continuum_path))
     repo.init()
 
-    with patch('subprocess.run') as mock_run:
-        mock_run.side_effect = [
-            MagicMock(stdout='test-host', returncode=0),  # hostname
-            MagicMock(stdout='5.15.0-test', returncode=0),  # uname -r
-            MagicMock(returncode=0),  # git rev-parse (is a repo)
-            MagicMock(stdout='feature/my-branch', returncode=0),  # git branch
-            MagicMock(stdout='', returncode=0),  # git status (no changes)
-            MagicMock(returncode=1),  # git log (no unpushed)
-        ]
+    with patch.dict(os.environ, {'CCC_HOST_HOSTNAME': 'test-host', 'CCC_HOST_KERNEL': '5.15.0-test'}):
+        with patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                MagicMock(returncode=0),  # git rev-parse (is a repo)
+                MagicMock(stdout='feature/my-branch', returncode=0),  # git branch
+                MagicMock(stdout='', returncode=0),  # git status (no changes)
+                MagicMock(returncode=1),  # git log (no unpushed)
+            ]
 
-        with patch('shutil.copy'):
-            metadata = repo.create_snapshot(workspace)
+            with patch('shutil.copy'):
+                metadata = repo.create_snapshot(workspace)
 
     assert metadata['git']['is_repo'] is True
     assert metadata['git']['branch'] == 'feature/my-branch'
@@ -122,19 +118,18 @@ def test_snapshot_detects_uncommitted_changes(tmp_path):
     repo = ContinuumRepo(str(continuum_path))
     repo.init()
 
-    with patch('subprocess.run') as mock_run:
-        mock_run.side_effect = [
-            MagicMock(stdout='test-host', returncode=0),
-            MagicMock(stdout='5.15.0-test', returncode=0),
-            MagicMock(returncode=0),  # is a git repo
-            MagicMock(stdout='main', returncode=0),  # git branch
-            MagicMock(stdout=' M file.txt\n', returncode=0),  # git status (has changes)
-            MagicMock(returncode=1),  # git log (no unpushed)
-            MagicMock(stdout='diff content', returncode=0),  # git diff
-        ]
+    with patch.dict(os.environ, {'CCC_HOST_HOSTNAME': 'test-host', 'CCC_HOST_KERNEL': '5.15.0-test'}):
+        with patch('subprocess.run') as mock_run:
+            mock_run.side_effect = [
+                MagicMock(returncode=0),  # is a git repo
+                MagicMock(stdout='main', returncode=0),  # git branch
+                MagicMock(stdout=' M file.txt\n', returncode=0),  # git status (has changes)
+                MagicMock(returncode=1),  # git log (no unpushed)
+                MagicMock(stdout='diff content', returncode=0),  # git diff
+            ]
 
-        with patch('shutil.copy'):
-            metadata = repo.create_snapshot(workspace)
+            with patch('shutil.copy'):
+                metadata = repo.create_snapshot(workspace)
 
     assert metadata['git']['has_uncommitted'] is True
 

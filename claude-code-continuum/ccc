@@ -126,6 +126,10 @@ build_docker_cmd() {
     # Pass through continuum repo URL
     [[ -n "${CONTINUUM_REPO_URL:-}" ]] && docker_args+=(-e CONTINUUM_REPO_URL)
 
+    # Pass host system details for session metadata
+    docker_args+=(-e "CCC_HOST_HOSTNAME=$(hostname)")
+    docker_args+=(-e "CCC_HOST_KERNEL=$(uname -r)")
+
     echo "${docker_args[@]}"
 }
 

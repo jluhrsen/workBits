@@ -118,9 +118,9 @@ class ContinuumRepo:
         session_dir = self.sessions_dir / session_id
         session_dir.mkdir(parents=True, exist_ok=True)
 
-        # Capture host system details
-        hostname = subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip()
-        kernel_version = subprocess.run(['uname', '-r'], capture_output=True, text=True).stdout.strip()
+        # Capture host system details (passed from wrapper script)
+        hostname = os.environ.get('CCC_HOST_HOSTNAME', 'unknown')
+        kernel_version = os.environ.get('CCC_HOST_KERNEL', 'unknown')
 
         # Capture git state
         git_info = self._capture_git_state(workspace_path)
