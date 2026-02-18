@@ -76,9 +76,11 @@ build_docker_cmd() {
     docker_args+=(--rm -it)
     docker_args+=(--name "ccc-$$")
 
-    # Container runs as UID 1000 (claude user) by default
-    # This works naturally if host user is also UID 1000
-    # File ownership on mounts will match, avoiding permission issues
+    # For podman: use --userns=keep-id to map host UID into container
+    # This allows reading mounted files without changing host filesystem ownership
+    if [[ "$runtime" == "podman" ]]; then
+        docker_args+=(--userns=keep-id)
+    fi
 
     # Mount current directory as /workspace (read-write)
     docker_args+=(-v "$(pwd):/workspace")
@@ -91,34 +93,19 @@ build_docker_cmd() {
     # Session state is managed by the continuum vault, not host .claude state
 
     # Mount GCP credentials for Vertex AI (read-only)
-    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -d "$HOME/.config/gcloud" ]]; then
-        if [[ "$runtime" == "podman" ]]; then
-            docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro,U")
-        else
-            docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
-        fi
+        docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
     fi
 
     # Mount SSH known_hosts for git operations (read-write)
-    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -f "$HOME/.ssh/known_hosts" ]]; then
-        if [[ "$runtime" == "podman" ]]; then
-            docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw,U")
-        else
-            docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
-        fi
+        docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
     fi
 
     # Mount continuum deploy key if configured (read-only)
-    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -n "${CONTINUUM_REPO_URL:-}" ]]; then
         KEY_FILE="${CONTINUUM_KEY_PATH:-$HOME/.ssh/continuum_deploy_key}"
-        if [[ "$runtime" == "podman" ]]; then
-            docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro,U")
-        else
-            docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
-        fi
+        docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
     fi
 
     # Pass through Claude-related env vars
