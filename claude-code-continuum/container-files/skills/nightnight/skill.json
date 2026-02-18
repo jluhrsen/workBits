@@ -1,0 +1,8 @@
+{
+  "name": "nightnight",
+  "version": "1.0.0",
+  "description": "Save current session to continuum vault",
+  "triggers": ["/nightnight"],
+  "author": "CCC",
+  "license": "MIT"
+}

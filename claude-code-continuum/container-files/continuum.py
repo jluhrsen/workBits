@@ -9,8 +9,11 @@ import os
 import json
 import yaml
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import subprocess
+import uuid
+from datetime import datetime
+import shutil
 
 class ContinuumRepo:
     """Manages the continuum repository structure and operations"""
@@ -94,6 +97,195 @@ class ContinuumRepo:
                     sessions.append(metadata)
 
         return sessions
+
+    def create_snapshot(self, workspace_path: Path, description: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Create a session snapshot
+
+        Args:
+            workspace_path: Path to the workspace directory
+            description: Optional description for the session
+
+        Returns:
+            Session metadata dictionary
+        """
+        # Generate session ID: timestamp + UUID
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        session_uuid = str(uuid.uuid4())[:8]
+        session_id = f"session-{timestamp}-{session_uuid}"
+
+        # Create session directory
+        session_dir = self.sessions_dir / session_id
+        session_dir.mkdir(parents=True, exist_ok=True)
+
+        # Capture host system details
+        hostname = subprocess.run(['hostname'], capture_output=True, text=True).stdout.strip()
+        kernel_version = subprocess.run(['uname', '-r'], capture_output=True, text=True).stdout.strip()
+
+        # Capture git state
+        git_info = self._capture_git_state(workspace_path)
+
+        # Build metadata
+        metadata = {
+            'session_id': session_id,
+            'timestamp': datetime.now().isoformat(),
+            'description': description or f"Session from {workspace_path.name}",
+            'workspace_path': str(workspace_path.absolute()),
+            'hostname': hostname,
+            'kernel_version': kernel_version,
+            'git': git_info
+        }
+
+        # Save metadata
+        with open(session_dir / 'metadata.json', 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+        # Capture conversation history
+        self._capture_conversation(session_dir)
+
+        # Capture git workspace state
+        if git_info['is_repo']:
+            self._capture_git_workspace(workspace_path, session_dir, git_info)
+
+        return metadata
+
+    def _capture_git_state(self, workspace_path: Path) -> Dict[str, Any]:
+        """Capture current git repository state"""
+        git_info = {
+            'is_repo': False,
+            'branch': None,
+            'has_uncommitted': False,
+            'has_unpushed': False
+        }
+
+        # Check if this is a git repo
+        result = subprocess.run(
+            ['git', '-C', str(workspace_path), 'rev-parse', '--git-dir'],
+            capture_output=True
+        )
+
+        if result.returncode != 0:
+            return git_info
+
+        git_info['is_repo'] = True
+
+        # Get current branch
+        result = subprocess.run(
+            ['git', '-C', str(workspace_path), 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            git_info['branch'] = result.stdout.strip()
+
+        # Check for uncommitted changes
+        result = subprocess.run(
+            ['git', '-C', str(workspace_path), 'status', '--porcelain'],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            git_info['has_uncommitted'] = True
+
+        # Check for unpushed commits
+        result = subprocess.run(
+            ['git', '-C', str(workspace_path), 'log', '@{u}..HEAD', '--oneline'],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            git_info['has_unpushed'] = True
+
+        return git_info
+
+    def _capture_conversation(self, session_dir: Path):
+        """Capture current Claude Code conversation history"""
+        # Find the current Claude session history file
+        claude_dir = Path.home() / '.claude'
+        history_file = claude_dir / 'history.jsonl'
+
+        if history_file.exists():
+            # Copy the entire history file
+            # In a real implementation, we'd want to filter to just the current session
+            shutil.copy(history_file, session_dir / 'conversation.jsonl')
+
+    def _capture_git_workspace(self, workspace_path: Path, session_dir: Path, git_info: Dict[str, Any]):
+        """Capture git workspace state (uncommitted changes, unpushed commits)"""
+        # Capture uncommitted changes as a patch
+        if git_info['has_uncommitted']:
+            result = subprocess.run(
+                ['git', '-C', str(workspace_path), 'diff', 'HEAD'],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                (session_dir / 'snapshot.patch').write_text(result.stdout)
+
+        # If there are unpushed commits, record the WIP branch name
+        if git_info['has_unpushed'] and git_info['branch']:
+            wip_branch = f"claude-wip/{git_info['branch']}-{session_dir.name}"
+            (session_dir / 'wip-branch').write_text(wip_branch)
+
+            # Push the WIP branch to remote
+            try:
+                subprocess.run(
+                    ['git', '-C', str(workspace_path), 'push', 'origin', f"{git_info['branch']}:{wip_branch}"],
+                    check=True,
+                    capture_output=True
+                )
+            except subprocess.CalledProcessError:
+                # If push fails, just record the branch name anyway
+                pass
+
+    def commit_and_push_snapshot(self, session_id: str, description: str) -> bool:
+        """
+        Commit the session snapshot to the continuum repo and push to remote
+
+        Args:
+            session_id: The session ID to commit
+            description: Description for the commit message
+
+        Returns:
+            True if successful, False otherwise
+        """
+        ssh_key_path = Path.home() / '.ssh' / 'continuum_key'
+        git_env = {
+            **os.environ,
+            'GIT_SSH_COMMAND': f'ssh -i {ssh_key_path} -o StrictHostKeyChecking=no'
+        }
+
+        try:
+            # Add the session directory
+            subprocess.run(
+                ['git', '-C', str(self.path), 'add', f'sessions/{session_id}'],
+                check=True
+            )
+
+            # Check if there are changes to commit
+            result = subprocess.run(
+                ['git', '-C', str(self.path), 'diff', '--cached', '--quiet'],
+                capture_output=True
+            )
+
+            if result.returncode != 0:  # Non-zero means there are changes
+                # Commit the snapshot
+                commit_msg = f"snapshot: {description}\n\nSession ID: {session_id}"
+                subprocess.run(
+                    ['git', '-C', str(self.path), 'commit', '-m', commit_msg],
+                    check=True
+                )
+
+                # Push to remote
+                subprocess.run(
+                    ['git', '-C', str(self.path), 'push'],
+                    check=True,
+                    env=git_env
+                )
+
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error committing snapshot: {e}")
+            return False
 
     def clone_or_pull(self, repo_url: str) -> bool:
         """Clone continuum repo if not exists, otherwise pull latest"""

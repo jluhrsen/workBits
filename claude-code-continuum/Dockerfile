@@ -109,6 +109,9 @@ COPY --chown=$USER_NAME:$USER_NAME container-files/session_manager.py /home/$USE
 COPY --chown=$USER_NAME:$USER_NAME container-files/continuum.py /home/$USER_NAME/continuum.py
 RUN chmod +x /home/$USER_NAME/session_manager.py
 
+# Copy CCC skills
+COPY --chown=$USER_NAME:$USER_NAME container-files/skills /home/$USER_NAME/.claude/skills
+
 # Pre-configure Claude Code to skip onboarding prompts
 # - .claude.json: marks onboarding as complete (skips theme picker)
 # - .claude/settings.json: skips dangerous mode permission prompt
