@@ -109,6 +109,14 @@ COPY --chown=$USER_NAME:$USER_NAME container-files/session_manager.py /home/$USE
 COPY --chown=$USER_NAME:$USER_NAME container-files/continuum.py /home/$USER_NAME/continuum.py
 RUN chmod +x /home/$USER_NAME/session_manager.py
 
+# Pre-configure Claude Code to skip onboarding prompts
+# - .claude.json: marks onboarding as complete (skips theme picker)
+# - .claude/settings.json: skips dangerous mode permission prompt
+RUN mkdir -p /home/$USER_NAME/.claude && \
+    echo '{"hasCompletedOnboarding": true, "installMethod": "global"}' > /home/$USER_NAME/.claude.json && \
+    echo '{"skipDangerousModePermissionPrompt": true}' > /home/$USER_NAME/.claude/settings.json && \
+    chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/.claude /home/$USER_NAME/.claude.json
+
 # Set up basic shell
 ENV SHELL=/usr/bin/zsh
 SHELL ["/usr/bin/zsh", "-c"]
