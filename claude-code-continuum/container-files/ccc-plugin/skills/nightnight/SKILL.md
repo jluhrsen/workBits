@@ -1,4 +1,8 @@
-# /nightnight - Save Session to Continuum Vault
+---
+description: Save current session to continuum vault
+---
+
+# Save Session to Continuum Vault
 
 Create a snapshot of the current session and save it to the continuum vault.
 
