@@ -109,9 +109,66 @@ class SessionManager:
                 else:
                     print("Please enter 'y' or 'n'")
 
-        # TODO: Handle case where sessions exist
-        # For now, this is unreachable
-        return True
+        # Display available sessions
+        print("📚 Available Sessions:")
+        print()
+
+        # Sort by timestamp (most recent first)
+        sessions.sort(key=lambda s: s.get('timestamp', ''), reverse=True)
+
+        for i, session in enumerate(sessions, 1):
+            timestamp = session.get('timestamp', 'unknown')[:19]  # YYYY-MM-DDTHH:MM:SS
+            description = session.get('description', 'No description')
+            hostname = session.get('hostname', 'unknown')
+            workspace = session.get('workspace_path', 'unknown')
+
+            print(f"  {i}. {timestamp} - {description}")
+            print(f"     Host: {hostname} | Workspace: {workspace}")
+            print()
+
+        # Show options
+        print("Options:")
+        print("  [1-{}] - Restore session".format(len(sessions)))
+        print("  [n]   - New session")
+        print("  [q]   - Quit")
+        print()
+
+        # Get user choice
+        while True:
+            choice = input("Choice: ").strip().lower()
+
+            if choice == 'q':
+                print()
+                print("👋 Exiting")
+                return False
+            elif choice == 'n':
+                print()
+                print("🚀 Starting new Claude Code session...")
+                print()
+                return True
+            elif choice.isdigit() and 1 <= int(choice) <= len(sessions):
+                selected = sessions[int(choice) - 1]
+                self.restore_session(selected)
+                print()
+                print(f"🔄 Restoring session: {selected['description']}")
+                print()
+                return True
+            else:
+                print(f"Invalid choice. Enter 1-{len(sessions)}, 'n', or 'q'")
+
+    def restore_session(self, session_metadata: dict):
+        """Restore a session by copying conversation history"""
+        import shutil
+
+        session_id = session_metadata['session_id']
+        session_dir = self.continuum_path / 'sessions' / session_id
+
+        # Copy conversation history to Claude's history location
+        conversation_file = session_dir / 'conversation.jsonl'
+        if conversation_file.exists():
+            claude_history = Path.home() / '.claude' / 'history.jsonl'
+            claude_history.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(conversation_file, claude_history)
 
     def copy_gcp_credentials(self):
         """Copy GCP credentials file and fix ownership using sudo"""
