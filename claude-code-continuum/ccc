@@ -91,8 +91,13 @@ build_docker_cmd() {
     # Session state is managed by the continuum vault, not host .claude state
 
     # Mount GCP credentials for Vertex AI (read-only)
+    # :U flag changes ownership inside container to match container user (podman only)
     if [[ -d "$HOME/.config/gcloud" ]]; then
-        docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
+        if [[ "$runtime" == "podman" ]]; then
+            docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro,U")
+        else
+            docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
+        fi
     fi
 
     # Mount SSH known_hosts for git operations (read-write)
