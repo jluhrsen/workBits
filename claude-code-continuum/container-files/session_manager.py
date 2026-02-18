@@ -113,9 +113,55 @@ class SessionManager:
         # For now, this is unreachable
         return True
 
+    def copy_gcp_credentials(self):
+        """Copy GCP credentials file and fix ownership using sudo"""
+        import subprocess
+
+        source = Path('/gcp/creds.json')
+        target = Path.home() / '.config' / 'gcloud' / 'application_default_credentials.json'
+
+        if source.exists():
+            # Create target directory
+            target.parent.mkdir(parents=True, exist_ok=True)
+
+            # Copy file using sudo (to read root-owned file)
+            subprocess.run(['sudo', 'cp', str(source), str(target)], check=True)
+
+            # Fix ownership to claude user
+            subprocess.run(['sudo', 'chown', 'claude:claude', str(target)], check=True)
+
+    def copy_ssh_credentials(self):
+        """Copy SSH keys and known_hosts, fix ownership using sudo"""
+        import subprocess
+
+        ssh_dir = Path.home() / '.ssh'
+        ssh_dir.mkdir(mode=0o700, exist_ok=True)
+
+        # Copy continuum deploy key if mounted
+        continuum_key_source = Path('/tmp/host-ssh/continuum_key')
+        continuum_key_target = ssh_dir / 'continuum_key'
+        if continuum_key_source.exists():
+            subprocess.run(['sudo', 'cp', str(continuum_key_source), str(continuum_key_target)], check=True)
+            subprocess.run(['sudo', 'chown', 'claude:claude', str(continuum_key_target)], check=True)
+            subprocess.run(['sudo', 'chmod', '600', str(continuum_key_target)], check=True)
+
+        # Copy known_hosts if mounted
+        known_hosts_source = Path('/tmp/host-ssh/known_hosts')
+        known_hosts_target = ssh_dir / 'known_hosts'
+        if known_hosts_source.exists():
+            subprocess.run(['sudo', 'cp', str(known_hosts_source), str(known_hosts_target)], check=True)
+            subprocess.run(['sudo', 'chown', 'claude:claude', str(known_hosts_target)], check=True)
+            subprocess.run(['sudo', 'chmod', '644', str(known_hosts_target)], check=True)
+
     def run(self):
         """Main entrypoint - show banner, sync, and start Claude"""
         workspace = os.getcwd()
+
+        # Copy GCP credentials if mounted
+        self.copy_gcp_credentials()
+
+        # Copy SSH credentials if mounted
+        self.copy_ssh_credentials()
 
         # Show banner
         print(self.generate_banner(workspace))
@@ -130,8 +176,9 @@ class SessionManager:
         should_launch = self.session_picker()
 
         if should_launch:
-            # Launch Claude Code
-            os.execvp('claude', ['claude'] + sys.argv[1:])
+            # Launch Claude Code with CCC plugin
+            plugin_dir = str(Path.home() / '.claude' / 'plugins' / 'ccc')
+            os.execvp('claude', ['claude', '--plugin-dir', plugin_dir] + sys.argv[1:])
         else:
             # User chose to exit
             sys.exit(0)

@@ -17,7 +17,7 @@ ARG USER_GID=1000
 
 RUN groupadd --gid $USER_GID $USER_NAME && \
     useradd --uid $USER_UID --gid $USER_GID -m $USER_NAME && \
-    echo "$USER_NAME ALL=(ALL) NOPASSWD: /usr/bin/dnf, /usr/bin/mv, /usr/bin/tee" >> /etc/sudoers
+    echo "$USER_NAME ALL=(ALL) NOPASSWD: /usr/bin/dnf, /usr/bin/mv, /usr/bin/tee, /usr/bin/cp, /usr/bin/chown, /usr/bin/chmod" >> /etc/sudoers
 
 # Install system packages
 RUN dnf install -y --allowerasing \
@@ -115,6 +115,7 @@ COPY --chown=$USER_NAME:$USER_NAME container-files/ccc-plugin /home/$USER_NAME/.
 # Pre-configure Claude Code to skip onboarding prompts
 # - .claude.json: marks onboarding as complete (skips theme picker)
 # - .claude/settings.json: skips dangerous mode permission prompt
+# Note: CCC plugin loaded via --plugin-dir flag in session_manager.py
 RUN mkdir -p /home/$USER_NAME/.claude && \
     echo '{"hasCompletedOnboarding": true, "installMethod": "global"}' > /home/$USER_NAME/.claude.json && \
     echo '{"skipDangerousModePermissionPrompt": true}' > /home/$USER_NAME/.claude/settings.json && \

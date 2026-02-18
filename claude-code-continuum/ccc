@@ -83,26 +83,26 @@ build_docker_cmd() {
     docker_args+=(-v "$(pwd):/workspace")
     docker_args+=(-w /workspace)
 
-    # Whitelist /tmp
-    docker_args+=(-v /tmp:/tmp)
-
     # Note: .claude directory is NOT mounted - each container session is isolated
     # Session state is managed by the continuum vault, not host .claude state
+    # /tmp is NOT mounted - container uses its own /tmp (avoids UID mapping issues)
 
-    # Mount GCP credentials for Vertex AI (read-only)
-    if [[ -d "$HOME/.config/gcloud" ]]; then
-        docker_args+=(-v "$HOME/.config/gcloud:/home/$CONTAINER_USER/.config/gcloud:ro")
+    # Mount GCP Application Default Credentials file (read-only)
+    # Will be copied to ~/.config/gcloud/application_default_credentials.json by session_manager.py
+    GCLOUD_CREDS="$HOME/.config/gcloud/application_default_credentials.json"
+    if [[ -f "$GCLOUD_CREDS" ]]; then
+        docker_args+=(-v "$GCLOUD_CREDS:/gcp/creds.json:ro")
     fi
 
-    # Mount SSH known_hosts for git operations (read-write)
+    # Mount SSH files to temp location for copying (will be copied by session_manager.py)
     if [[ -f "$HOME/.ssh/known_hosts" ]]; then
-        docker_args+=(-v "$HOME/.ssh/known_hosts:/home/$CONTAINER_USER/.ssh/known_hosts:rw")
+        docker_args+=(-v "$HOME/.ssh/known_hosts:/tmp/host-ssh/known_hosts:ro")
     fi
 
     # Mount continuum deploy key if configured (read-only)
     if [[ -n "${CONTINUUM_REPO_URL:-}" ]]; then
         KEY_FILE="${CONTINUUM_KEY_PATH:-$HOME/.ssh/continuum_deploy_key}"
-        docker_args+=(-v "$KEY_FILE:/home/$CONTAINER_USER/.ssh/continuum_key:ro")
+        docker_args+=(-v "$KEY_FILE:/tmp/host-ssh/continuum_key:ro")
     fi
 
     # Pass through Claude-related env vars
@@ -168,6 +168,7 @@ EOF
     runtime=$(detect_runtime)
 
     # Run container
+    echo "DEBUG: $runtime run ${docker_args[@]} $CONTAINER_IMAGE $@"
     exec "$runtime" run "${docker_args[@]}" "$CONTAINER_IMAGE" "$@"
 }
 
