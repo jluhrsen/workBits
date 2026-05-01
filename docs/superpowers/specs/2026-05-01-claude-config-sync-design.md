@@ -156,7 +156,7 @@ Laptop A                    GitHub                     Laptop B
 2. If not installed:
    ```
    Gitleaks not found. Install? (recommended for security)
-   [Y]es - install via go install
+   [Y]es - install via: go install github.com/gitleaks/gitleaks/v8@latest
    [N]o - proceed without secret detection (WARNING)
    ```
 3. Scan staged files: `gitleaks detect --source .claude/ --verbose --no-git`
