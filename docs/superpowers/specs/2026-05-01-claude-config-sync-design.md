@@ -80,8 +80,9 @@ Laptop A                    GitHub                     Laptop B
    - Run `git status` in workBits
    - If dirty: ask user to commit/stash/cancel
 3. Copy local files to workBits staging:
-   - `cp -r ~/.claude/skills/* workBits/.claude/skills/`
-   - `cp ~/.claude/settings.json workBits/.claude/settings.json`
+   - `rsync -a --delete ~/.claude/skills/ ~/repos/workBits/.claude/skills/`
+   - `cp ~/.claude/settings.json ~/repos/workBits/.claude/settings.json`
+   - Note: rsync --delete ensures workBits matches local (removes deleted skills)
 4. Secret detection with Gitleaks:
    - Check if gitleaks installed: `command -v gitleaks`
    - If not installed: offer to install, fallback to proceeding with warning
@@ -286,10 +287,12 @@ fi
 
 **Directory Sync:**
 ```bash
-# Sync all skills including subdirectories
-rsync -av --delete \
-    ~/.claude/skills/ \
-    ~/repos/workBits/.claude/skills/
+# Use rsync to sync skills (mirrors source, removing deleted files)
+rsync -a --delete ~/.claude/skills/ ~/repos/workBits/.claude/skills/
+
+# -a = archive mode (recursive, preserve permissions, timestamps)
+# --delete = remove files in dest that don't exist in source
+# Trailing slashes are important: source/ means "contents of source"
 ```
 
 ## Testing Strategy
