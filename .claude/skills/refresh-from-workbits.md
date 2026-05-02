@@ -75,9 +75,11 @@ time_diff_human() {
     local abs_diff=${diff#-}
     
     if [[ $abs_diff -lt 86400 ]]; then
-        echo "$((abs_diff / 3600)) hours"
+        local hours=$((abs_diff / 3600))
+        echo "$hours hour$([[ $hours -ne 1 ]] && echo s || true)"
     else
-        echo "$((abs_diff / 86400)) days"
+        local days=$((abs_diff / 86400))
+        echo "$days day$([[ $days -ne 1 ]] && echo s || true)"
     fi
 }
 
@@ -101,7 +103,7 @@ mkdir -p "$CLAUDE_DIR/skills"
 if [[ -d "$WORKBITS_DIR/.claude/skills" ]]; then
     cd "$WORKBITS_DIR/.claude/skills"
     while IFS= read -r -d '' remote_file; do
-        relative_path="${remote_file#$WORKBITS_DIR/.claude/skills/}"
+        relative_path="${remote_file#./}"  # Strip ./ prefix from find output
         local_file="$CLAUDE_DIR/skills/$relative_path"
         
         # Create parent directory if needed
