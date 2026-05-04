@@ -1,0 +1,8 @@
+{
+  "name": "ovn-sync",
+  "description": "OVN-Kubernetes branch sync analysis tools",
+  "version": "1.0.0",
+  "author": {
+    "name": "jamoluhrsen"
+  }
+}

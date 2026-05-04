@@ -1,0 +1,20 @@
+{
+  "name": "workbits",
+  "owner": {
+    "name": "jamoluhrsen"
+  },
+  "plugins": [
+    {
+      "name": "workbits-sync",
+      "source": "./plugins/workbits-sync",
+      "description": "Sync Claude Code configuration via GitHub workBits repo",
+      "version": "1.0.0"
+    },
+    {
+      "name": "ovn-sync",
+      "source": "./plugins/ovn-sync",
+      "description": "OVN-Kubernetes branch sync analysis tools",
+      "version": "1.0.0"
+    }
+  ]
+}
