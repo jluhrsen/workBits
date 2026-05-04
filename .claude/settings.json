@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd *)"
+    ]
+  },
+  "enabledPlugins": {
+    "ci@ai-helpers": true,
+    "superpowers@superpowers-marketplace": true,
+    "coderabbit@claude-plugins-official": true,
+    "ovn-sync": true,
+    "workbits-sync": true,
+    "workbits-sync@workbits": true,
+    "ovn-sync@workbits": true
+  },
+  "extraKnownMarketplaces": {
+    "workbits": {
+      "source": {
+        "source": "directory",
+        "path": "/home/jamoluhrsen/repos/workBits"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true
+}
