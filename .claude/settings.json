@@ -8,8 +8,6 @@
     "ci@ai-helpers": true,
     "superpowers@superpowers-marketplace": true,
     "coderabbit@claude-plugins-official": true,
-    "ovn-sync": true,
-    "workbits-sync": true,
     "workbits-sync@workbits": true,
     "ovn-sync@workbits": true
   },
@@ -17,7 +15,7 @@
     "workbits": {
       "source": {
         "source": "directory",
-        "path": "/home/jamoluhrsen/repos/workBits"
+        "path": "$HOME/repos/workBits"
       }
     }
   },
