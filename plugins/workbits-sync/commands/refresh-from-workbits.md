@@ -8,7 +8,7 @@ Pull the latest Claude Code configuration from the workBits GitHub repository an
 
 **What gets synced:**
 - `workBits/.claude/skills/` → `~/.claude/skills/`
-- Portable settings (enabledPlugins, extraKnownMarketplaces, permissions) merged into `~/.claude/settings.json`
+- Portable settings (enabledPlugins, extraKnownMarketplaces, permissions, hooks, env) merged into `~/.claude/settings.json`
 - ai-helpers repository updated to latest main branch
 - New ai-helpers plugins automatically detected and enabled
 
@@ -190,7 +190,9 @@ if [[ -f "$remote_settings" ]]; then
     portable_keys=$(echo "$remote_expanded" | jq '{
         enabledPlugins: .enabledPlugins,
         extraKnownMarketplaces: .extraKnownMarketplaces,
-        permissions: .permissions
+        permissions: .permissions,
+        hooks: .hooks,
+        env: .env
     } | with_entries(select(.value != null))')
 
     if [[ -f "$local_settings" ]]; then
@@ -198,7 +200,7 @@ if [[ -f "$remote_settings" ]]; then
         merged=$(jq -s '.[0] * .[1]' "$local_settings" <(echo "$portable_keys"))
         echo "$merged" | jq '.' > "$local_settings.tmp" && mv "$local_settings.tmp" "$local_settings"
         echo "  Merged portable keys into global settings"
-        echo "  (enabledPlugins, extraKnownMarketplaces, permissions)"
+        echo "  (enabledPlugins, extraKnownMarketplaces, permissions, hooks, env)"
         echo "  Machine-specific keys preserved (model, effortLevel, etc.)"
     else
         # No local settings yet, use portable keys as starting point

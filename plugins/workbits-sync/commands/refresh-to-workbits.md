@@ -8,7 +8,7 @@ Push your local Claude Code configuration (skills and portable settings) to the 
 
 **What gets pushed:**
 - `~/.claude/skills/` → `workBits/.claude/skills/`
-- Portable settings keys (enabledPlugins, extraKnownMarketplaces, permissions) extracted from `~/.claude/settings.json` into `workBits/.claude/settings.json`
+- Portable settings keys (enabledPlugins, extraKnownMarketplaces, permissions, hooks, env) extracted from `~/.claude/settings.json` into `workBits/.claude/settings.json`
 
 **What stays local:** Machine-specific keys like model, effortLevel, alwaysThinkingEnabled are NOT pushed.
 
@@ -97,7 +97,9 @@ if [[ -f "$local_settings" ]]; then
     portable=$(jq --arg home "$HOME" '{
         enabledPlugins: .enabledPlugins,
         extraKnownMarketplaces: .extraKnownMarketplaces,
-        permissions: .permissions
+        permissions: .permissions,
+        hooks: .hooks,
+        env: .env
     } | with_entries(select(.value != null))
     | if .extraKnownMarketplaces then
         .extraKnownMarketplaces |= with_entries(
@@ -113,7 +115,7 @@ if [[ -f "$local_settings" ]]; then
     else
         echo "$portable" | jq '.' > "$repo_settings"
     fi
-    echo "  Extracted: enabledPlugins, extraKnownMarketplaces, permissions"
+    echo "  Extracted: enabledPlugins, extraKnownMarketplaces, permissions, hooks, env"
     echo "  Paths normalized: $HOME -> \$HOME"
 else
     echo "  settings.json not found locally, skipping"
