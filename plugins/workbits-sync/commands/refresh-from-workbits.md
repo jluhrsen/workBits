@@ -4,22 +4,26 @@ description: Pull latest Claude config from GitHub workBits repo with smart merg
 
 # Refresh from workBits
 
-Pull the latest Claude Code configuration from the workBits GitHub repository.
+Pull the latest Claude Code configuration from the workBits GitHub repository and sync ai-helpers plugins.
 
-**What gets pulled:**
+**What gets synced:**
 - `workBits/.claude/skills/` → `~/.claude/skills/`
 - Portable settings (enabledPlugins, extraKnownMarketplaces, permissions) merged into `~/.claude/settings.json`
+- ai-helpers repository updated to latest main branch
+- New ai-helpers plugins automatically detected and enabled
 
 **Smart merging:** Skills use timestamp comparison. Settings are key-merged so machine-specific preferences (model, effortLevel, etc.) are preserved.
 
 ## Usage
 
 Just run this skill. It will:
-1. Pull latest from GitHub
-2. Ask if this is your first sync
-3. Copy skill files based on timestamps (newer wins)
-4. Merge portable settings keys into global settings
-5. Preserve local-only files and machine-specific preferences
+1. Update ai-helpers to latest main (if repo is clean)
+2. Pull latest from workBits GitHub
+3. Ask if this is your first sync
+4. Copy skill files based on timestamps (newer wins)
+5. Merge portable settings keys into global settings
+6. Auto-detect and enable new ai-helpers plugins
+7. Preserve local-only files and machine-specific preferences
 
 ## Implementation
 
@@ -28,9 +32,10 @@ Just run this skill. It will:
 set -euo pipefail
 
 WORKBITS_DIR="$HOME/repos/workBits"
+AI_HELPERS_DIR="$HOME/repos/RedHat/openshift/ai-helpers"
 CLAUDE_DIR="$HOME/.claude"
 
-echo "Syncing Claude config from workBits..."
+echo "Syncing Claude config from workBits and ai-helpers..."
 echo ""
 
 # Check for jq (required for settings merge)
@@ -49,16 +54,41 @@ if [[ ! -d "$WORKBITS_DIR" ]]; then
     exit 1
 fi
 
-# Step 2: Pull latest from GitHub
+# Step 2: Update ai-helpers if it exists
+if [[ -d "$AI_HELPERS_DIR" ]]; then
+    echo "Updating ai-helpers..."
+    cd "$AI_HELPERS_DIR"
+    
+    # Check if we can switch to main (clean working tree)
+    if git diff-index --quiet HEAD -- 2>/dev/null; then
+        current_branch=$(git rev-parse --abbrev-ref HEAD)
+        if [[ "$current_branch" != "main" ]]; then
+            echo "  Switching to main branch..."
+            git checkout main 2>/dev/null || echo "  Warning: Could not switch to main, staying on $current_branch"
+        fi
+        echo "  Pulling latest from GitHub..."
+        if ! git pull; then
+            echo "  Warning: Git pull failed for ai-helpers, continuing anyway..."
+        fi
+    else
+        echo "  Warning: ai-helpers has uncommitted changes, skipping git pull"
+    fi
+    echo ""
+else
+    echo "Warning: ai-helpers not found at $AI_HELPERS_DIR, skipping..."
+    echo ""
+fi
+
+# Step 3: Pull latest from workBits
 cd "$WORKBITS_DIR"
-echo "Pulling latest from GitHub..."
+echo "Pulling latest from workBits..."
 if ! git pull; then
     echo ""
     echo "ERROR: Git pull failed. Resolve manually and try again."
     exit 1
 fi
 
-# Step 3: Ask about first sync
+# Step 4: Ask about first sync
 echo ""
 read -p "First sync on this machine? (will merge, not overwrite) [y/N]: " first_sync
 
@@ -92,7 +122,7 @@ copied=0
 kept_local=0
 skipped=0
 
-# Step 4: Sync skills
+# Step 5: Sync skills
 echo ""
 echo "Syncing skills..."
 
@@ -139,7 +169,7 @@ if [[ -d "$WORKBITS_DIR/.claude/skills" ]]; then
     done < <(find . -type f -print0)
 fi
 
-# Step 5: Merge portable settings into global settings
+# Step 6: Merge portable settings into global settings
 echo ""
 echo "Merging settings..."
 
@@ -179,7 +209,49 @@ else
     echo "  settings.json not found in workBits (skipped)"
 fi
 
-# Step 6: Summary
+# Step 7: Check for new ai-helpers plugins
+echo ""
+echo "Checking for new ai-helpers plugins..."
+
+if [[ -f "$AI_HELPERS_DIR/.claude-plugin/marketplace.json" ]] && [[ -f "$local_settings" ]]; then
+    # Get all plugin names from ai-helpers marketplace
+    available_plugins=$(jq -r '.plugins[].name' "$AI_HELPERS_DIR/.claude-plugin/marketplace.json" | sort)
+    
+    # Get currently enabled ai-helpers plugins
+    enabled_plugins=$(jq -r '.enabledPlugins | keys[] | select(endswith("@ai-helpers")) | sub("@ai-helpers$";"")' "$local_settings" | sort)
+    
+    # Find new plugins that aren't enabled yet
+    new_plugins=$(comm -23 <(echo "$available_plugins") <(echo "$enabled_plugins"))
+    
+    if [[ -n "$new_plugins" ]]; then
+        new_count=$(echo "$new_plugins" | wc -l)
+        echo "  Found $new_count new plugin(s):"
+        echo "$new_plugins" | sed 's/^/    - /'
+        echo ""
+        echo "  Enabling new plugins..."
+        
+        # Build jq expression to add new plugins
+        for plugin in $new_plugins; do
+            # Add to local settings
+            temp=$(jq --arg plugin "${plugin}@ai-helpers" '.enabledPlugins[$plugin] = true' "$local_settings")
+            echo "$temp" > "$local_settings"
+            
+            # Add to workBits settings
+            if [[ -f "$remote_settings" ]]; then
+                temp=$(jq --arg plugin "${plugin}@ai-helpers" '.enabledPlugins[$plugin] = true' "$remote_settings")
+                echo "$temp" > "$remote_settings"
+            fi
+        done
+        
+        echo "  ✓ Enabled $new_count new plugin(s)"
+    else
+        echo "  All ai-helpers plugins already enabled"
+    fi
+else
+    echo "  Skipping plugin check (ai-helpers marketplace or settings not found)"
+fi
+
+# Step 8: Summary
 echo ""
 echo "Summary:"
 echo "  - Files copied/updated: $copied"

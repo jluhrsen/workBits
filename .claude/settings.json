@@ -5,17 +5,59 @@
     ]
   },
   "enabledPlugins": {
-    "ci@ai-helpers": true,
     "superpowers@superpowers-marketplace": true,
     "coderabbit@claude-plugins-official": true,
     "workbits-sync@workbits": true,
-    "ovn-sync@workbits": true
+    "ovn-sync@workbits": true,
+    "git@ai-helpers": true,
+    "hello-world@ai-helpers": true,
+    "jira@ai-helpers": true,
+    "ci@ai-helpers": true,
+    "teams@ai-helpers": true,
+    "doc@ai-helpers": true,
+    "session@ai-helpers": true,
+    "snowflake@ai-helpers": true,
+    "sosreport@ai-helpers": true,
+    "utils@ai-helpers": true,
+    "olm@ai-helpers": true,
+    "olm-team@ai-helpers": true,
+    "operator-dashboard@ai-helpers": true,
+    "agendas@ai-helpers": true,
+    "openshift@ai-helpers": true,
+    "openshift-tls-profile@ai-helpers": true,
+    "etcd@ai-helpers": true,
+    "yaml@ai-helpers": true,
+    "must-gather@ai-helpers": true,
+    "lvms@ai-helpers": true,
+    "native-notifications@ai-helpers": true,
+    "metrics@ai-helpers": true,
+    "hcp@ai-helpers": true,
+    "compliance@ai-helpers": true,
+    "test-coverage@ai-helpers": true,
+    "node-tuning@ai-helpers": true,
+    "testing@ai-helpers": true,
+    "origin@ai-helpers": true,
+    "container-image@ai-helpers": true,
+    "node@ai-helpers": true,
+    "bigquery@ai-helpers": true,
+    "workspaces@ai-helpers": true,
+    "gwapi@ai-helpers": true,
+    "code-review@ai-helpers": true,
+    "golang@ai-helpers": true,
+    "ote-migration@ai-helpers": true,
+    "console@ai-helpers": true
   },
   "extraKnownMarketplaces": {
     "workbits": {
       "source": {
         "source": "directory",
         "path": "$HOME/repos/workBits"
+      }
+    },
+    "ai-helpers": {
+      "source": {
+        "source": "directory",
+        "path": "$HOME/repos/RedHat/openshift/ai-helpers"
       }
     }
   },
