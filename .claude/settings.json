@@ -61,5 +61,21 @@
       }
     }
   },
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "export JIRA_API_TOKEN=\"$(cat $HOME/repos/workBits/atlassian_token)\""
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "JIRA_URL": "https://redhat.atlassian.net",
+    "JIRA_USERNAME": "jluhrsen@redhat.com"
+  }
 }
