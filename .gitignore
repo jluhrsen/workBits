@@ -1,5 +1,6 @@
 jira_token
 atlassian_token
+atlassian_token.old
 
 # Claude Code local config (not synced)
 .claude/settings.local.json
