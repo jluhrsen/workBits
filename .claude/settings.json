@@ -45,7 +45,8 @@
     "code-review@ai-helpers": true,
     "golang@ai-helpers": true,
     "ote-migration@ai-helpers": true,
-    "console@ai-helpers": true
+    "console@ai-helpers": true,
+    "agent-eval-harness@agent-eval-harness-dev": true
   },
   "extraKnownMarketplaces": {
     "workbits": {
@@ -58,6 +59,13 @@
       "source": {
         "source": "directory",
         "path": "$HOME/repos/RedHat/openshift/ai-helpers"
+      }
+    },
+    "agent-eval-harness-dev": {
+      "source": {
+        "source": "github",
+        "repo": "opendatahub-io/agent-eval-harness",
+        "path": null
       }
     }
   },
