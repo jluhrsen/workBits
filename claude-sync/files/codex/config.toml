@@ -1,0 +1,88 @@
+model = "gpt-6-astra"
+model_reasoning_effort = "low"
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/ovn-kubernetes"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/release"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/cluster-network-operator"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/origin"]
+trust_level = "trusted"
+
+[projects."/tmp/termination/junit"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/ai-helpers"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/work/RedHat/bugs/Azure_Cluster_Install"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/pr-ci-dashboard"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/ovn-kubernetes"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/RedHat/openshift/cloud-network-config-controller"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/Personal/cfb-map"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/Personal/allthejunk"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/Personal/ScreenTime"]
+trust_level = "trusted"
+
+[projects."/tmp/ovn-kubernetes-1"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/Documents/Codex/2026-08-27/ope"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/Documents/Codex/2026-09-01/i"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/Documents/Codex/2026-09-02/ope"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/repos/Personal/SCM"]
+trust_level = "trusted"
+
+[projects."/home/jamoluhrsen/Documents/Codex/2026-09-23/ple"]
+trust_level = "trusted"
+
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[plugins."unified-computer-use@openai-bundled"]
+enabled = true
+
+[features]
+js_repl = false

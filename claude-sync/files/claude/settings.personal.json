@@ -1,0 +1,116 @@
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA": "1",
+    "OTEL_TRACES_EXPORTER": "otlp",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://127.0.0.1:4318",
+    "OTEL_SERVICE_NAME": "claude-code-agent",
+    "OTEL_LOG_RAW_API_BODIES": "1",
+    "OTEL_LOG_USER_PROMPTS": "1",
+    "OTEL_LOG_TOOL_DETAILS": "1",
+    "OTEL_LOG_TOOL_CONTENT": "1",
+    "JIRA_URL": "https://redhat.atlassian.net",
+    "JIRA_USERNAME": "jluhrsen@redhat.com",
+    "JIRA_API_TOKEN": "__FROM_FILE:$HOME/repos/workBits/jira_token__",
+    "CLAUDE_CODE_USE_VERTEX": "",
+    "ANTHROPIC_VERTEX_PROJECT_ID": "",
+    "CLOUD_ML_REGION": "",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-5@20250929",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5@20251001"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cd *)"
+    ]
+  },
+  "model": "opus",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '<EXTREMELY_IMPORTANT>\nYou have Jira credentials configured in environment variables:\n- JIRA_URL: https://redhat.atlassian.net\n- JIRA_USERNAME: jluhrsen@redhat.com  \n- JIRA_API_TOKEN: (available in $JIRA_API_TOKEN)\n\nWhen using Jira skills from the ai-helpers plugin, they automatically use these credentials via the jira_curl.sh wrapper script.\n\nTo interact with Jira REST API directly via curl, construct the Basic auth header like this:\nAUTH_HEADER=$(printf \"%s:%s\" \"$JIRA_USERNAME\" \"$JIRA_API_TOKEN\" | base64 | tr -d \"\\r\\n\") && curl -s -X <METHOD> \"$JIRA_URL/rest/api/3/<endpoint>\" -H \"Authorization: Basic $AUTH_HEADER\" -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d \"<json-payload>\"\n\nNEVER use any Jira MCP server. You have direct API access via these credentials.\n</EXTREMELY_IMPORTANT>'"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "input=$(cat); remaining=$(echo \"$input\" | jq -r '.context_window.remaining_percentage // empty'); if [ -n \"$remaining\" ]; then pct=$(printf '%.0f' \"$remaining\"); if [ \"$pct\" -ge 75 ]; then color=32; elif [ \"$pct\" -ge 25 ]; then color=33; else color=31; fi; printf \"\\033[${color}mContext: ${pct}%% remaining\\033[0m\"; fi"
+  },
+  "enabledPlugins": {
+    "superpowers@superpowers-marketplace": true,
+    "coderabbit@claude-plugins-official": true,
+    "workbits-sync@workbits": true,
+    "ovn-sync@workbits": true,
+    "git@ai-helpers": true,
+    "hello-world@ai-helpers": true,
+    "jira@ai-helpers": true,
+    "ci@ai-helpers": true,
+    "teams@ai-helpers": true,
+    "doc@ai-helpers": true,
+    "session@ai-helpers": true,
+    "snowflake@ai-helpers": true,
+    "sosreport@ai-helpers": true,
+    "utils@ai-helpers": true,
+    "olm@ai-helpers": true,
+    "olm-team@ai-helpers": true,
+    "operator-dashboard@ai-helpers": true,
+    "agendas@ai-helpers": true,
+    "openshift@ai-helpers": true,
+    "openshift-tls-profile@ai-helpers": true,
+    "etcd@ai-helpers": true,
+    "yaml@ai-helpers": true,
+    "must-gather@ai-helpers": true,
+    "lvms@ai-helpers": true,
+    "native-notifications@ai-helpers": true,
+    "metrics@ai-helpers": true,
+    "hcp@ai-helpers": true,
+    "compliance@ai-helpers": true,
+    "test-coverage@ai-helpers": true,
+    "node-tuning@ai-helpers": true,
+    "testing@ai-helpers": true,
+    "origin@ai-helpers": true,
+    "container-image@ai-helpers": true,
+    "node@ai-helpers": true,
+    "bigquery@ai-helpers": true,
+    "workspaces@ai-helpers": true,
+    "gwapi@ai-helpers": true,
+    "code-review@ai-helpers": true,
+    "golang@ai-helpers": true,
+    "ote-migration@ai-helpers": true,
+    "console@ai-helpers": true,
+    "pr-ci-dashboard@local": true,
+    "odh-ai-helpers@opendatahub-skills": true,
+    "agent-eval-harness@opendatahub-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "workbits": {
+      "source": {
+        "source": "directory",
+        "path": "$HOME/repos/workBits"
+      }
+    },
+    "ai-helpers": {
+      "source": {
+        "source": "directory",
+        "path": "$HOME/repos/RedHat/openshift/ai-helpers"
+      }
+    },
+    "opendatahub-skills": {
+      "source": {
+        "source": "github",
+        "repo": "opendatahub-io/skills-registry"
+      }
+    }
+  },
+  "effortLevel": "xhigh",
+  "skipDangerousModePermissionPrompt": true,
+  "preferredNotifChannel": "notifications_disabled"
+}

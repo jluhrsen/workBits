@@ -1,0 +1,428 @@
+{
+  "version": 1,
+  "generatedOn": "2026-10-14",
+  "sourceHost": "jamo-p73",
+  "marketplaces": {
+    "github": {
+      "claude-plugins-official": "anthropics/claude-plugins-official",
+      "superpowers-marketplace": "obra/superpowers-marketplace",
+      "opendatahub-skills": "opendatahub-io/skills-registry",
+      "caveman": "JuliusBrussee/caveman"
+    },
+    "directory": {
+      "ai-helpers": {
+        "path": "$HOME/repos/RedHat/openshift/ai-helpers",
+        "clone": "https://github.com/jluhrsen/ai-helpers.git"
+      },
+      "workbits": {
+        "path": "$HOME/repos/workBits",
+        "clone": "https://github.com/jluhrsen/workBits.git"
+      },
+      "local": {
+        "path": "$HOME/repos/RedHat/openshift/pr-ci-dashboard",
+        "clone": "https://github.com/jluhrsen/pr-ci-dashboard.git",
+        "optional": true,
+        "note": "not registered in known_marketplaces.json on the source machine and the repo ships only .claude-plugin/plugin.json, so 'marketplace add' may refuse it; the dashboard helpers are nice-to-have"
+      }
+    }
+  },
+  "plugins": [
+    {
+      "id": "agendas@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "agent-eval-harness@opendatahub-skills",
+      "marketplace": "opendatahub-skills",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "bigquery@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "caveman@caveman",
+      "marketplace": "caveman",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "ci@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "code-review@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "coderabbit@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "compliance@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "console@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "container-image@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "doc@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "etcd@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "git@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "github@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "golang@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "gopls-lsp@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "gwapi@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "hcp@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "hello-world@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "jira@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "lvms@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "metrics@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "must-gather@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "native-notifications@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "node-tuning@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "node@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "odh-ai-helpers@opendatahub-skills",
+      "marketplace": "opendatahub-skills",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "olm-team@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "olm@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "openshift-tls-profile@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "openshift@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "operator-dashboard@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "origin@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "ote-migration@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "ovn-sync@workbits",
+      "marketplace": "workbits",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "plugin-dev@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "pr-ci-dashboard@local",
+      "marketplace": "local",
+      "enabled": true,
+      "resolvable": true,
+      "optional": true
+    },
+    {
+      "id": "quarterly-connection@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "session@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "skill-creator@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "snowflake@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "sosreport@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "superpowers@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "superpowers@superpowers-marketplace",
+      "marketplace": "superpowers-marketplace",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "teams@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "test-coverage@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "testing@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "typescript-lsp@claude-plugins-official",
+      "marketplace": "claude-plugins-official",
+      "enabled": false,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "utils@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "workbits-sync@workbits",
+      "marketplace": "workbits",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "workspaces@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    },
+    {
+      "id": "yaml@ai-helpers",
+      "marketplace": "ai-helpers",
+      "enabled": true,
+      "resolvable": true,
+      "optional": false
+    }
+  ],
+  "files": {
+    "files/claude/CLAUDE.md": "$HOME/.claude/CLAUDE.md",
+    "files/claude/settings.personal.json": "$HOME/.claude/settings.personal.json",
+    "files/claude/settings.work.json": "$HOME/.claude/settings.work.json",
+    "files/claude/settings.local.json": "$HOME/.claude/settings.local.json",
+    "files/claude/skills": "$HOME/.claude/skills",
+    "files/config/claude-code-vertex/env.sh": "$HOME/.config/claude-code-vertex/env.sh",
+    "files/zsh/aliases.zsh": "$HOME/.claude/aliases.zsh",
+    "files/codex/config.toml": "$HOME/.codex/config.toml",
+    "files/cursor/cli-config.json": "$HOME/.cursor/cli-config.json"
+  },
+  "secretsHandledOutOfBand": [
+    "$HOME/.claude/settings.{personal,work}.json env.JIRA_API_TOKEN (placeholder, filled from $HOME/repos/workBits/jira_token)",
+    "$HOME/repos/workBits/jira_token (gitignored)",
+    "$HOME/.claude/google_client_secret.json",
+    "$HOME/.claude/.credentials.json (re-login instead)",
+    "$HOME/.codex/auth.json (re-login instead)",
+    "$HOME/.config/gcloud/application_default_credentials.json (re-auth instead)"
+  ],
+  "notSynced": [
+    "sessions/",
+    "history.jsonl",
+    "projects/*.jsonl",
+    "file-history/",
+    "shell-snapshots/",
+    "telemetry/",
+    "cache/",
+    "plugins/cache/",
+    "plugins/marketplaces/",
+    "skills/synced/",
+    ".caveman-* state",
+    "projects/*/memory/ (internal notes; handed over out of band)"
+  ]
+}

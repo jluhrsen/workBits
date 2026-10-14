@@ -5,3 +5,9 @@ atlassian_token.old
 # Claude Code local config (not synced)
 .claude/settings.local.json
 .claude/backups/
+
+# claude-sync: never commit credentials or local backups
+claude-sync/**/jira_token
+claude-sync/**/*credentials*
+claude-sync/**/google_client_secret.json
+claude-sync/files/claude/memory/
