@@ -132,6 +132,10 @@ manifest = {
         "files/codex/config.toml": "$HOME/.codex/config.toml",
         "files/cursor/cli-config.json": "$HOME/.cursor/cli-config.json",
     },
+    "mergeOnly": [
+        "files/codex/config.toml",
+        "files/cursor/cli-config.json",
+    ],
     "secretsHandledOutOfBand": [
         "$HOME/.claude/settings.{personal,work}.json env.JIRA_API_TOKEN (placeholder, filled from $HOME/repos/workBits/jira_token)",
         "$HOME/repos/workBits/jira_token (gitignored)",

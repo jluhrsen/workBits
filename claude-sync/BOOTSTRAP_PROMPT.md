@@ -36,6 +36,9 @@ Do this:
    anything it replaces), and appends one `source` line to `~/.zshrc`.
    The `local` marketplace and its `pr-ci-dashboard` plugin are optional - if
    they fail, note it and keep going.
+   If I already have a Codex or Cursor config on this machine, the script will
+   leave `~/.codex/config.toml.from-sync` / `~/.cursor/cli-config.json.from-sync`
+   beside it instead of overwriting - tell me, and offer to merge them.
 
 5. **Install my secrets from the handoff file.** No credential is in git. I
    have a file called `claude-new-laptop-handoff/SECRETS.txt` that I moved over

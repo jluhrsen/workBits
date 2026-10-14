@@ -43,6 +43,12 @@ def fill_token(path: Path) -> bool:
     return True
 
 
+def merge_only(rel: str) -> bool:
+    """These tools rewrite their own config (plugin caches, MCP wiring, auth),
+    so never overwrite an existing one - drop a .from-sync copy beside it."""
+    return rel in MANIFEST.get("mergeOnly", [])
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
@@ -58,6 +64,12 @@ def main() -> int:
         src, dst = SYNC / rel, expand(target)
         if not src.exists():
             print(f"  - skip {rel} (not in payload)")
+            continue
+        if merge_only(rel) and dst.exists():
+            side = dst.with_name(dst.name + ".from-sync")
+            print(f"  {rel} -> {side} (exists; merge by hand)")
+            if not args.dry_run:
+                shutil.copy2(src, side)
             continue
         print(f"  {rel} -> {dst}")
         if args.dry_run:

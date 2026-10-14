@@ -41,6 +41,14 @@ hand on each machine.
 Per-machine logins that are never synced: `~/.claude/.credentials.json`,
 `~/.codex/auth.json`, Cursor auth, and gcloud ADC for the Vertex path.
 
+## Merge-only files
+
+Codex and Cursor rewrite their own config files (plugin caches, MCP wiring,
+auth, UI counters), so `apply.py` never overwrites an existing
+`~/.codex/config.toml` or `~/.cursor/cli-config.json`. If one is already there
+it writes `<file>.from-sync` beside it for a hand merge; on a fresh machine it
+writes the file directly.
+
 ## Deliberately not synced
 
 Session transcripts, `history.jsonl`, `file-history/`, shell snapshots,
