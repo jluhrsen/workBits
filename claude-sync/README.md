@@ -41,6 +41,12 @@ hand on each machine.
 Per-machine logins that are never synced: `~/.claude/.credentials.json`,
 `~/.codex/auth.json`, Cursor auth, and gcloud ADC for the Vertex path.
 
+## Portable paths
+
+Payload files never contain a real home directory. `collect.py` replaces this
+machine's home with `__HOME__` and `apply.py` expands it again, so the same
+payload works for any username.
+
 ## Merge-only files
 
 Codex and Cursor rewrite their own config files (plugin caches, MCP wiring,
@@ -59,7 +65,8 @@ public repo and move between machines out of band.
 
 ## Profiles
 
-`settings.personal.json` and `settings.work.json` differ only in the Vertex
-keys (`CLAUDE_CODE_USE_VERTEX`, `ANTHROPIC_VERTEX_PROJECT_ID`,
-`CLOUD_ML_REGION`). Claude Code is started against one of them explicitly, via
+`settings.personal.json` and `settings.work.json` differ in the Vertex keys
+(`CLAUDE_CODE_USE_VERTEX`, `ANTHROPIC_VERTEX_PROJECT_ID`, `CLOUD_ML_REGION`) and
+in telemetry: the work profile logs to the local OTLP endpoint, the personal
+profile never does. `collect.py` and `apply.py` both enforce that. Claude Code is started against one of them explicitly, via
 the `claude-work` / `claude-home` aliases in `files/zsh/aliases.zsh`.

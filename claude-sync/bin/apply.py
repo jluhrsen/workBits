@@ -4,6 +4,9 @@
 Copies every file listed in manifest.json "files" into place, backing up any
 existing copy, and fills the JIRA_API_TOKEN placeholder from the local
 (gitignored) token file. Never writes a secret back into the repo.
+
+The payload is machine-neutral: __HOME__ becomes this machine's home directory
+on the way in, and the personal profile always has telemetry forced off.
 """
 import argparse, json, shutil, sys, time
 from pathlib import Path
@@ -13,6 +16,7 @@ SYNC = Path(__file__).resolve().parent.parent
 MANIFEST = json.loads((SYNC / "manifest.json").read_text())
 TOKEN_FILE = HOME / "repos/workBits/jira_token"
 PLACEHOLDER = "__FROM_FILE:$HOME/repos/workBits/jira_token__"
+HOME_TOKEN = "__HOME__"
 STAMP = time.strftime("%Y%m%d-%H%M%S")
 
 
@@ -29,6 +33,30 @@ def backup(path: Path, backup_dir: Path) -> None:
         shutil.copytree(path, dest, dirs_exist_ok=True)
     else:
         shutil.copy2(path, dest)
+
+
+def expand_home(path: Path) -> None:
+    """Replace the portable home token with this machine's home directory."""
+    for f in path.rglob("*") if path.is_dir() else [path]:
+        if not f.is_file():
+            continue
+        try:
+            text = f.read_text()
+        except UnicodeDecodeError:
+            continue
+        if HOME_TOKEN in text:
+            f.write_text(text.replace(HOME_TOKEN, str(HOME)))
+
+
+def force_telemetry_off(path: Path) -> None:
+    """The personal profile never logs to a collector, whatever the payload says."""
+    data = json.loads(path.read_text())
+    env = data.setdefault("env", {})
+    for key in list(env):
+        if key.startswith("OTEL_") or key == "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA":
+            del env[key]
+    env["CLAUDE_CODE_ENABLE_TELEMETRY"] = "0"
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def fill_token(path: Path) -> bool:
@@ -70,6 +98,7 @@ def main() -> int:
             print(f"  {rel} -> {side} (exists; merge by hand)")
             if not args.dry_run:
                 shutil.copy2(src, side)
+                expand_home(side)
             continue
         print(f"  {rel} -> {dst}")
         if args.dry_run:
@@ -83,8 +112,12 @@ def main() -> int:
                 if out.exists():
                     shutil.rmtree(out) if out.is_dir() else out.unlink()
                 shutil.copytree(sub, out) if sub.is_dir() else shutil.copy2(sub, out)
+                expand_home(out)
         else:
             shutil.copy2(src, dst)
+            expand_home(dst)
+            if dst.name == "settings.personal.json":
+                force_telemetry_off(dst)
             if dst.name.startswith("settings.") and fill_token(dst):
                 dst.chmod(0o600)
                 print(f"    token filled from {TOKEN_FILE}")

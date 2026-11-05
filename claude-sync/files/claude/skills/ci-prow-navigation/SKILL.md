@@ -133,7 +133,7 @@ Three periodic jobs merge upstream ovn-org/ovn-kubernetes into openshift/ovn-kub
 | release-4.23 | `release-4.23-periodics-downstream-merge` |
 | release-5.0 | `release-5.0-periodics-downstream-merge` |
 
-All three target the same `master` branch and can race. The automation script lives at `ci-operator/step-registry/github/downstream-sync/github-downstream-sync-commands.sh` in the `openshift/release` repo (local: `/home/jamoluhrsen/repos/RedHat/openshift/release/`).
+All three target the same `master` branch and can race. The automation script lives at `ci-operator/step-registry/github/downstream-sync/github-downstream-sync-commands.sh` in the `openshift/release` repo (local: `__HOME__/repos/RedHat/openshift/release/`).
 
 PRs are created by `openshift-pr-manager[bot]`. Failure indicators in PR title: `CONFLICT!`, `GO MOD FAILED!`, `TEST ANNOTATIONS FAILED!`. The step name for the build log is `github-downstream-sync`.
 

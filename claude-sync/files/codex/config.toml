@@ -1,60 +1,60 @@
 model = "gpt-6-astra"
 model_reasoning_effort = "low"
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/ovn-kubernetes"]
+[projects."__HOME__/repos/RedHat/openshift/ovn-kubernetes"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/release"]
+[projects."__HOME__/repos/RedHat/openshift/release"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/cluster-network-operator"]
+[projects."__HOME__/repos/RedHat/openshift/cluster-network-operator"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/origin"]
+[projects."__HOME__/repos/RedHat/openshift/origin"]
 trust_level = "trusted"
 
 [projects."/tmp/termination/junit"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/ai-helpers"]
+[projects."__HOME__/repos/RedHat/openshift/ai-helpers"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/work/RedHat/bugs/Azure_Cluster_Install"]
+[projects."__HOME__/work/RedHat/bugs/Azure_Cluster_Install"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/pr-ci-dashboard"]
+[projects."__HOME__/repos/RedHat/openshift/pr-ci-dashboard"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/ovn-kubernetes"]
+[projects."__HOME__/repos/RedHat/ovn-kubernetes"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/RedHat/openshift/cloud-network-config-controller"]
+[projects."__HOME__/repos/RedHat/openshift/cloud-network-config-controller"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/Personal/cfb-map"]
+[projects."__HOME__/repos/Personal/cfb-map"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/Personal/allthejunk"]
+[projects."__HOME__/repos/Personal/allthejunk"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/Personal/ScreenTime"]
+[projects."__HOME__/repos/Personal/ScreenTime"]
 trust_level = "trusted"
 
 [projects."/tmp/ovn-kubernetes-1"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/Documents/Codex/2026-08-27/ope"]
+[projects."__HOME__/Documents/Codex/2026-08-27/ope"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/Documents/Codex/2026-09-01/i"]
+[projects."__HOME__/Documents/Codex/2026-09-01/i"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/Documents/Codex/2026-09-02/ope"]
+[projects."__HOME__/Documents/Codex/2026-09-02/ope"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/repos/Personal/SCM"]
+[projects."__HOME__/repos/Personal/SCM"]
 trust_level = "trusted"
 
-[projects."/home/jamoluhrsen/Documents/Codex/2026-09-23/ple"]
+[projects."__HOME__/Documents/Codex/2026-09-23/ple"]
 trust_level = "trusted"
 
 [plugins."codex-app-tools@openai-bundled"]

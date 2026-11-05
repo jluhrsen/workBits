@@ -10,6 +10,7 @@ FILES = SYNC / "files"
 CLAUDE = HOME / ".claude"
 
 TOKEN_PLACEHOLDER = "__FROM_FILE:$HOME/repos/workBits/jira_token__"
+HOME_TOKEN = "__HOME__"
 SECRET_ENV_KEYS = re.compile(r"(TOKEN|SECRET|PASSWORD|API_KEY|_KEY)$", re.I)
 
 def scrub_settings(src: Path) -> dict:
@@ -20,13 +21,39 @@ def scrub_settings(src: Path) -> dict:
             env[k] = TOKEN_PLACEHOLDER if k == "JIRA_API_TOKEN" else "__SET_LOCALLY__"
     return d
 
+def strip_telemetry(d: dict) -> dict:
+    """The personal profile never logs to a collector, even if a live file does."""
+    env = d.setdefault("env", {})
+    for k in list(env):
+        if k.startswith("OTEL_") or k == "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA":
+            del env[k]
+    env["CLAUDE_CODE_ENABLE_TELEMETRY"] = "0"
+    return d
+
+def make_portable(root: Path) -> None:
+    """Replace this machine's home directory with a token apply.py expands."""
+    pattern = re.compile(re.escape(str(HOME)) + r"(?![\w.-])")
+    for f in root.rglob("*"):
+        if not f.is_file():
+            continue
+        try:
+            text = f.read_text()
+        except UnicodeDecodeError:
+            continue
+        new = pattern.sub(HOME_TOKEN, text)
+        if new != text:
+            f.write_text(new)
+
 def write_json(path: Path, data) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 # --- settings ---
 for name in ("settings.personal.json", "settings.work.json"):
-    write_json(FILES / "claude" / name, scrub_settings(CLAUDE / name))
+    settings = scrub_settings(CLAUDE / name)
+    if name == "settings.personal.json":
+        strip_telemetry(settings)
+    write_json(FILES / "claude" / name, settings)
 shutil.copy2(CLAUDE / "settings.local.json", FILES / "claude/settings.local.json")
 shutil.copy2(CLAUDE / "CLAUDE.md", FILES / "claude/CLAUDE.md")
 
@@ -71,6 +98,9 @@ if cur_src.exists():
               "serverConfigCache", "modelSelectionHistory"):
         c.pop(k, None)
     write_json(FILES / "cursor/cli-config.json", c)
+
+# --- no machine-specific home paths in the payload ---
+make_portable(FILES)
 
 # --- manifest: marketplaces + plugins ---
 known = json.loads((CLAUDE / "plugins/known_marketplaces.json").read_text())

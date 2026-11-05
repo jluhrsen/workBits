@@ -9,7 +9,7 @@ description: Use when interacting with Jira - querying issues, creating tickets,
 
 - **Instance:** `https://redhat.atlassian.net`
 - **Username:** `jluhrsen@redhat.com`
-- **Token file:** `/home/jamoluhrsen/repos/workBits/jira_token`
+- **Token file:** `__HOME__/repos/workBits/jira_token`
 - **API base:** `https://redhat.atlassian.net/rest/api/3`
 - **Account ID:** `712020:b94122c9-36dc-4439-a554-3b2f0a115212`
 - **Dashboard:** "My Sprint & Backlog" (ID 24616) — sprint and backlog view
@@ -20,7 +20,7 @@ description: Use when interacting with Jira - querying issues, creating tickets,
 All requests use `curl -u` with the username and API token (strip trailing newline from token file):
 
 ```bash
-TOKEN=$(cat /home/jamoluhrsen/repos/workBits/jira_token | tr -d '\n')
+TOKEN=$(cat __HOME__/repos/workBits/jira_token | tr -d '\n')
 
 curl -s -u "jluhrsen@redhat.com:$TOKEN" \
      -H "Content-Type: application/json" \
